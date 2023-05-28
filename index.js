@@ -3,10 +3,19 @@ const { route } = require('./routes');
 const port = 8000;
 const app = express();
 
+// mongoose & user schema
+const db = require('./config/mongoose');
+// const User = require('./models/user');
+
+// cookie-parser
+const cookieParser  = require('cookie-parser');
+app.use(express.urlencoded());
+app.use(cookieParser());  
+
 //using static files
 app.use(express.static('./assets'));
 
-//using Styles & Scripts to refer links other ejs files into layout.ejs
+//extract the styles from subpages(ejs files) & put them into layout.ejs at specified locationseet
 app.set('layout extractStyles' , true);
 app.set('layout extractScripts' , true);
 
