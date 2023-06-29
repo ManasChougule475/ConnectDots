@@ -3,7 +3,7 @@ const User = require('../models/user');
 
 module.exports.profile = function(req , res){
     // return res.end("<h1>Users Profile</h1>");
-    return res.render("users" , {
+    return res.render("user_profile" , {
         title : "Users"
     })
 }
@@ -12,6 +12,9 @@ module.exports.profile = function(req , res){
 
 // for localhost/user/sign-up  , this action is taken (to display/render sign up page)
 module.exports.signUp = function(req,res){
+    if(req.isAuthenticated()){
+        return res.redirect('/users/profile');
+    }
     return res.render('user_sign_up' , {
         title : 'Codeial | Sign Up'
     })
@@ -20,6 +23,9 @@ module.exports.signUp = function(req,res){
 
 // for localhost/user/sign-ip  , this action is taken (to display sign in page)
 module.exports.signIn = function(req,res){
+    if(req.isAuthenticated()){
+        return res.redirect('/users/profile');
+    }
     return res.render('user_sign_in' , {
         title : 'Codeial | Sign In'
     })
@@ -62,9 +68,18 @@ module.exports.create = function(req, res){
 
 // action to handle post request made by user by filling the form in user_sign_in page  :->
 module.exports.createSession = function(req, res){
-    
+    // console.log("called"); 
+    return res.redirect('/');  // in manual autn here we was redirecting to profile of user
 };
 
+
+module.exports.destroySession = function(req , res){
+    // req.logout(); // this will destroy session cookie 
+    req.logout(function(err) {  // req.logout() is now an asynchronous function, whereas previously it was synchronous
+        if (err) { return next(err); }
+        return res.redirect('/');
+      });
+}
 
 
 
