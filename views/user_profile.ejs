@@ -1,7 +1,48 @@
-<link rel="stylesheet" href="/css/users.css">
+<link rel="stylesheet" href="<%= assetPath('/css/user_profile.css') %>">
+
 <h1>
-    CODEIAL  /  User's Profile
+    <%= title %>
 </h1>
 
-<p> Name : <%= user.name %> </p>
-<p> Email : <%= user.email %> </p>
+
+<% if(user.id == profile_user.id){ %> 
+    <img src="<%= user.avatar %>" alt="<%= user.name %>" width="100" >
+    <form action="/users/update/<%= profile_user.id %>" enctype="multipart/form-data" method="POST">
+        <input type="text" name="name" placeholder="Your Name" value="<%= profile_user.name %>" required>
+        <input type="email" name="email" placeholder="Your Email" value="<%= profile_user.email %>" required>
+        <input type="file" name="avatar" placeholder="Your Profile Picture">
+        <input type="submit"  value="Update">
+    </form>
+<%}else{%>    
+    <h3>Name :<%= profile_user.name %></h3>
+    <strong><p>Email :<%= profile_user.email %></p></strong>
+
+    <div class="btn-grp">    
+        <% if(isFriend){%>
+            <button>
+                <a style="color:rgb(110, 55, 186);"  class="toggle-friend-btn" href="/friends/add-friend/?id=<%= profile_user.id %>">
+                    Remove From Friend List
+                </a>
+            </button>
+        <% }else{%>
+            <button>
+                <a style="color:rgb(110, 55, 186);" class="toggle-friend-btn" href="/friends/add-friend/?id=<%= profile_user.id %>">
+                    Add Into Friend List
+                </a>
+            </button>
+        <% } %>
+    </div>
+<%} %>
+
+<script src="<%= assetPath('/js/toggle_friend.js') %>"></script>   
+<script>
+    $(".toggle-friend-btn").each(function(){
+        let self = this;
+        let toggleFriend = new ToggleFriend(self);
+    });
+</script>
+
+
+
+
+

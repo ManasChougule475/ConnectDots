@@ -1,8 +1,15 @@
 body{
+
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+    
+
     margin: 0;
     text-align: center;
     #layout-main{
         // height: 100%;  // not working
-        color: green;
+        color: rgb(14, 15, 14);
     }
+
 }

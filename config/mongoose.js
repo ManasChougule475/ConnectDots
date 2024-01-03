@@ -1,7 +1,8 @@
 const mongoose = require('mongoose');
-
-//mongoose.connect('mongodb://localhost/codeial_development');
-mongoose.connect('mongodb://127.0.0.1/codeial_development');
+const env = require('./environment');
+const db_name = env.db;  // not direclty used env.db else MongoEngine: database names cannot contain the character '.'
+// mongoose.connect('mongodb://localhost/codeial_development');
+mongoose.connect('mongodb://127.0.0.1/db_name');  
 
 const db = mongoose.connection;
 
