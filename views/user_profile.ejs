@@ -16,23 +16,68 @@
 <%}else{%>    
     <h3>Name :<%= profile_user.name %></h3>
     <strong><p>Email :<%= profile_user.email %></p></strong>
-
     <div class="btn-grp">    
-        <% if(isFriend){%>
+        <% if(isFriend==1){%>
             <button>
                 <a style="color:rgb(110, 55, 186);"  class="toggle-friend-btn" href="/friends/add-friend/?id=<%= profile_user.id %>">
                     Remove From Friend List
                 </a>
             </button>
-        <% }else{%>
+        <% }else if(isFriend==0) {%>
             <button>
                 <a style="color:rgb(110, 55, 186);" class="toggle-friend-btn" href="/friends/add-friend/?id=<%= profile_user.id %>">
                     Add Into Friend List
                 </a>
             </button>
-        <% } %>
+        <% }else{%>
+            <button>
+               Pending
+            </button>
+        <%}%>
     </div>
 <%} %>
+
+
+
+<div class="flex-container">
+    <div class="profile_user_friends">
+        <p>Friends : <%=Object.keys(friends_list).length%></p>
+        <% if(isFriend == 1 || user.id == profile_user.id){%>  
+            <% for (friend of friends_list){%>    
+                <!-- if profile_user is friend of signed in user(user) then only signed in user can see friends of profile_user
+                else if profile is of signed in user only then he will see his friends and posts 
+                else only total friends and total posts of profile user will be visible -->
+                <% if(profile_user.name == friend.to_user.name){ %> 
+                    <li><a href="/users/profile/<%= friend.from_user.id %>"><%= friend.from_user.name %></a></li>
+                <%}else{%>  
+                    <li><a href="/users/profile/<%= friend.to_user.id %>"><%= friend.to_user.name %></a></li>
+                <%}%>
+            <%} %>
+        <%}%>
+    </div>
+    <div class="profile_user_posts">
+        <p>Posts : <%=Object.keys(posts).length%></p>
+        <% if(isFriend ==1 || user.id == profile_user.id){%>  
+            <% for (post of posts){%>  
+                <%- include("_post") -%>
+            <%} %>
+        <%}%>
+    </div>
+    
+    <% if(user.id != profile_user.id){%>  
+        <%- include('_chat_box') -%>   <!-- added chat engine -->
+    <%}%>
+
+</div>
+
+<!-- need to add here like in home.ejs else after clicking on any like or comment it will say cannot get -->
+<script src="<%= assetPath('/js/toggle_likes.js') %>"></script>   
+<script>
+    $('.toggle-like-button').each(function(){
+        let self = this;
+        let toggleLike = new ToggleLike(self);
+    });
+</script>
 
 <script src="<%= assetPath('/js/toggle_friend.js') %>"></script>   
 <script>
@@ -41,6 +86,18 @@
         let toggleFriend = new ToggleFriend(self);
     });
 </script>
+
+<!-- chat engine setup -->
+<script src="https://cdnjs.cloudflare.com/ajax/libs/socket.io/4.7.1/socket.io.js"></script>
+<script src="<%= assetPath('/js/chat_engine.js') %>" ></script>
+<% if (locals.user){ %>
+    <script>
+        const encodedProfileUser = '<%= encodeURIComponent(JSON.stringify(profile_user.email)) %>';
+        const profileUser = JSON.parse(decodeURIComponent(encodedProfileUser));
+        new ChatEngine('user-chat-box', '<%= locals.user.email %>', profileUser);
+    </script>
+<% } %>
+
 
 
 

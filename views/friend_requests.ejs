@@ -1,0 +1,15 @@
+<%if (locals.user){%>
+    <h1>
+        <%= title %>
+    </h1>
+
+    <% for (token of pendingFriendshipRequests) {%>
+        <li>
+            <a href="/users/profile/<%= token.fromUser.id %>"><%=token.fromUser.name%></a>
+            <a href="/friends/add-friend-response/?from_user=<%=token.fromUser.email%>&to_user=<%=locals.user.email%>&value=<%=true%>&token=<%=token%>">Accept</a>
+            <a href="/friends/add-friend-response/?from_user=<%=token.fromUser.email%>&to_user=<%=locals.user.email%>&value=<%=false%>&token=<%=token%>">Reject</a>
+        </li>
+    <%}%>
+<%}%>
+
+

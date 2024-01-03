@@ -9,7 +9,6 @@
     "sass": "sass --no-source-map --watch assets/scss:assets/css",
     "start": "npm-run-all --parallel sass run",
     "prod_start": "SET NODE_ENV=production & nodemon index.js"
-
   },
   "keywords": [
     "social"
@@ -40,6 +39,7 @@
     "morgan": "file:C:/Users/HP/AppData/Roaming/npm/node_modules/morgan",
     "multer": "^1.4.5-lts.1",
     "node": "^20.3.1",
+    "node-fetch": "^3.3.2",
     "nodemailer": "^6.9.3",
     "oauth": "^0.10.0",
     "passport": "^0.6.0",

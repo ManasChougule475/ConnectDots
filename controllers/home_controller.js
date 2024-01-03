@@ -6,6 +6,7 @@
 
 const Post = require('../models/post');
 const User = require('../models/user');
+const Chats = require('../models/message');
 
 module.exports.home =  async function(req,res){
 
@@ -33,7 +34,7 @@ module.exports.home =  async function(req,res){
     try{
         let posts = await Post.find({})
         .sort('-createAt')
-        .populate('user')
+        .populate('user')             
         .populate({
             path : 'comments' ,
             populate : {
@@ -46,14 +47,13 @@ module.exports.home =  async function(req,res){
                 path : 'likes' // likes on a particular comment
             }
         })
-        .populate('likes');
-
-
+        .populate('likes')
 
         let users = (await User.find({}))
 
         // friends
         let friends;
+        let pending_requests;
         if (req.user){
             let current_user = await User.findById(req.user._id)
             .populate({
@@ -64,20 +64,26 @@ module.exports.home =  async function(req,res){
             })
             .populate({
               path: "friendships",             
-              populate: {
+              populate: {   
                 path: 'to_user',
               }
-            });
+            })
+            .populate("pendingFriendshipRequests");     // populating pendingFriendshipRequests on signed in user
             friends = current_user.friendships; // all friends of signed in user
-        }else{
-            friends = [];
-        }
+            pending_requests = current_user.pendingFriendshipRequests.length //
+            console.log('pending_requests',pending_requests);
+        }  
+
+        const messages = await Chats.find().exec(); 
+
         return res.render('home' , {
             title : 'Codeial | Home',
             posts : posts , 
+            total_pending_requests : pending_requests, // count of total_friend_requests received which are pending
             all_users : users ,
-            all_friends : friends  
-        });
+            all_friends : friends ,
+            chats : messages
+        }); 
 
     }
     catch(err){

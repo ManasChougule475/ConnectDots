@@ -5,8 +5,8 @@ const passport = require('passport');
 
 // router.get('/profile'  ,  usersController.profile);
 // router.get('/profile' , passport.checkAuthentication ,  usersController.profile);  // error: route.get() requires a callback function but got a [object undefined]
-router.get('/profile/:id' , (req,res,next)=>{  // now to access the profile user need to sign in first
-    if(req.isAuthenticated()){
+router.get('/profile/:id' , (req,res,next)=>{  
+    if(req.isAuthenticated()){  //  to access the profile user need to sign in first 
         return next(); 
     }
     return res.redirect('/users/sign-in'); 
@@ -28,7 +28,7 @@ router.post('/create' , usersController.create);
 
 // router.post('/create-session' , passport.checkAuthentication  , usersController.createSession);
 router.post('/create-session' , 
-passport.authenticate(  // passport will authenticate the sign in request 
+passport.authenticate(  // passport will authenticate(checks credentials :- email & password) user when user submit sign in form if success then req.isAuthenticated() will become true
     'local' , 
     {failureRedirect : "/users/sign-in"}
 ),usersController.createSession);  
@@ -40,13 +40,26 @@ router.get('/auth/google', passport.authenticate('google', {scope: ['profile', '
 router.get('/auth/google/callback', passport.authenticate('google', {failureRedirect: '/users/sign-in'}), usersController.createSession); // when google verifies the user then it sends user's data to browsser on this callback route
 
 
+
+
 //forgot password
 router.get('/forgot-password' , usersController.forgotPass);
 router.post('/verify-email' , usersController.verifyEmail);
-router.get('/reset-password/:user_name/:user_email' , usersController.resetPass);
-router.post('/change-password/:user_email' , usersController.changePass);
+router.get('/reset-password/:user_name/:user_email/:token' , usersController.resetPass);
+router.post('/change-password/:user_email/:token' , usersController.changePass);
 
 
+
+
+
+//friendship:-
+router.get('/pending-friend-requests' , usersController.friendRequests);
+
+
+// verify or confirm email while registration
+router.get('/verify-my-email-address/:user_email/:token',usersController.verifyMyEmailAddress);
+
+router.get('/send-verification-email/:user_email/',usersController.sendVerificationEmail);
 
 
 module.exports = router;    

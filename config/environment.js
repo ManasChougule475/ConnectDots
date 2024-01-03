@@ -20,14 +20,21 @@ const development = {
     smtp : {   
         service: 'gmail',
         host: 'smtp.gmail.com', // google gmail smtp settings
-        port: 587, // Transport Layer Security
-        secure: false, // not going to use 2 factor authentication
-        auth: { // to establish identity with which you sendung the email(if you are bulk use they can charge you , if you spam then can block you)
-                // with api you can send almost 500 emails per day
+        // port: 587, // Transport Layer Security
+        // secure: false, // not going to use 2 factor authentication
+        // auth: { // to establish identity with which you sendung the email(if you are bulk use they can charge you , if you spam then can block you)
+        //         // with api you can send almost 500 emails per day
+        //     user: 'manaschougule2019@gmail.com',
+        //     pass: 'eatgzsvmkfthotaz' // Error: Invalid login: Application-specific password required - 
+        //     //If you have enabled 2-factor authentication on your Google account you can't use your regular password to access Gmail programmatically. You need to generate an app-specific password and use that in place of your actual password.
+        // }
+
+        port : 465,
+        secure:true,
+        auth:{
             user: 'manaschougule2019@gmail.com',
-            pass: 'eatgzsvmkfthotaz' // Error: Invalid login: Application-specific password required - 
-            //If you have enabled 2-factor authentication on your Google account you can't use your regular password to access Gmail programmatically. You need to generate an app-specific password and use that in place of your actual password.
-        }
+            pass: 'uoxtbrfawwtfmrsd'
+        },   
     },
     google_client_id: '86293826903-47rjjh5d38ebeoul5gl368f2o5dcfqnc.apps.googleusercontent.com',   
     google_client_secret: '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', 
@@ -40,6 +47,7 @@ const development = {
 }
 
 
+
 const production={
     name: 'production',
     asset_path: process.env.CODEIAL_ASSET_PATH,
@@ -48,13 +56,21 @@ const production={
     smtp: {
         service: 'gmail',
         host: 'smtp.gmail.com',
-        port: 587,
-        secure: false,
-        auth: {
+        // port: 587,
+        // secure: false,
+        // auth: {
+        //     user: process.env.CODEIAL_GMAIL_USERNAME,
+        //     pass: process.env.CODEIAL_GMAIL_PASSWORD
+        // }
+
+        port : 465,
+        secure:true,
+        auth:{
             user: process.env.CODEIAL_GMAIL_USERNAME,
             pass: process.env.CODEIAL_GMAIL_PASSWORD
-        }
-    },
+        },
+
+    },   
     google_client_id: process.env.CODEIAL_GOOGLE_CLIENT_ID,
     google_client_secret: process.env.CODEIAL_GOOGLE_CLIENT_SECRET,
     google_call_back_url: process.env.CODEIAL_GOOGLE_CALLBACK_URL,

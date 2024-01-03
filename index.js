@@ -9,7 +9,6 @@ require('dotenv').config();
 // console.log(process.env.LOAD_PORT); // prints ABCD
 
 
-
 // mongoose & user schema
 const db = require('./config/mongoose');
 // const User = require('./models/user');
@@ -111,7 +110,7 @@ app.use(customMware.setFlash);
 app.use('/' , require('./routes'));
 
 
-app.listen(port , function(err){
+app.listen(port , function(err){           
     if(err){
         console.log(`Error :-  ${err}`);
     }

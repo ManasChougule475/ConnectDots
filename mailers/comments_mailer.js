@@ -59,9 +59,9 @@ exports.newComment = (object , comment_content) => {
 }
 
 
-exports.resetPasswordEmail = (user) => {
+exports.resetPasswordEmail = (user,token) => {
     user = {email: user.email ,name: user.name}; // instead of sending entire user just sending his name & email
-    let htmlString = nodeMailer.renderTemplate({user: user}, '/passwords/reset_password_email.ejs');
+    let htmlString = nodeMailer.renderTemplate({user: user,token:token}, '/passwords/reset_password_email.ejs');
     nodeMailer.transporter.sendMail({
        from: 'manaschougule2019@gmail.com',
        to: user.email,        
@@ -76,8 +76,8 @@ exports.resetPasswordEmail = (user) => {
     });
 }
 
-exports.passwordResetSuccessfullyEmail = (user) => {
-    user = {email: user.email ,name: user.name}; // instead of sending entire user just sending his name & email
+exports.passwordResetSuccessfullyEmail = (user) => { 
+    var user = {email: user.email ,name: user.name}; // instead of sending entire user just sending his name & email
     let htmlString = nodeMailer.renderTemplate({user: user}, '/passwords/reset_password_successfully_email.ejs');
     nodeMailer.transporter.sendMail({
        from: 'manaschougule2019@gmail.com',
@@ -92,4 +92,72 @@ exports.passwordResetSuccessfullyEmail = (user) => {
         return;
     });
 }
-                    
+    
+                  
+           
+exports.addFriendEmail = (from_user , to_user , token)=>{ //  {email: this.email, name: this.name};
+    var from_user = {email: from_user.email ,name: from_user.name,
+        toString: function () {
+            // return `email: ${this.email}, name: ${this.name}`;    
+            return `${this.email}`;
+            // return {email: this.email, name: this.name}
+          },};
+    var to_user = {email: to_user.email ,name: to_user.name,      
+        toString: function () {     
+            // return `email: ${this.email}, name: ${this.name}`;
+            return `${this.email}`;
+          },};    
+        
+    console.log("token ====>",token);
+    let htmlString = nodeMailer.renderTemplate({from_user: from_user , to_user: to_user ,token:token}, '/friends/add_friend_email.ejs');
+    nodeMailer.transporter.sendMail({
+        from: from_user.email, 
+        to: to_user.email,        
+        subject:"I want to connect",
+        html: htmlString
+     }, (err, info) => {  
+         if (err){
+             console.log('Error in sending mail', err);
+             return;
+         }
+         return;
+     });
+}
+
+
+
+exports.verifyEmailAddress = (user,token) => { 
+    var user = {email: user.email ,name: user.name}; 
+    let htmlString = nodeMailer.renderTemplate({user:user, token:token}, '/emails/verify_email_address.ejs');
+    nodeMailer.transporter.sendMail({
+       from: 'manaschougule2019@gmail.com',
+       to: user.email,        
+       subject:"Codeial -Email Verification",
+        html: htmlString
+    }, (err, info) => {  
+        if (err){
+            console.log('Error in sending mail', err);
+            return;
+        }
+        return;
+    });
+}
+
+exports.accountActivated = (user) => { 
+    var user = {email: user.email ,name: user.name}; 
+    let htmlString = nodeMailer.renderTemplate({user:user}, '/emails/email_verified_successfully.ejs');
+    nodeMailer.transporter.sendMail({
+    from: 'manaschougule2019@gmail.com',
+    to: user.email,        
+    subject:"Codeial - Account Activated",
+        html: htmlString
+    }, (err, info) => {  
+        if (err){
+            console.log('Error in sending mail', err);
+            return;
+        }
+        return;
+    });
+}
+
+

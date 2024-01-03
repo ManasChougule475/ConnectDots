@@ -1,7 +1,8 @@
-<!-- CHANGE :: Creat the code for chat box -->
+
 <!-- <link rel="stylesheet" href="<%= assetPath('/css/chat_box.css') %>" > -->
 <% if (locals.user){ %>
 	<div id="user-chat-box">
+		<div id="flash-messages"></div>  <!-- this is div to show error flash messages-->
 		<ul id="chat-messages-list">
 			<li class="other-message">
 				<span>Other Message</span>
@@ -18,6 +19,6 @@
 			<button id="send-message">Send</button>
 		</div>
 
-
 	</div>
 <% } %>
+

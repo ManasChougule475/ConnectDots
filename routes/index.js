@@ -18,8 +18,15 @@ router.use('/friends' , require('./friends'));
 router.use('/api' , require('./api'));
 
 
-module.exports = router;
 
+
+//chat box:-
+// Define a route to handle fetching previous chat messages 
+router.use('/chat',require('./chats')); // /chat/getPreviousMessages
+
+
+module.exports = router;
+  
 
 
 

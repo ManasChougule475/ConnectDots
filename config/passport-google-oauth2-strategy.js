@@ -50,9 +50,9 @@ passport.use(new googleStrategy({
                     name: profile.displayName,
                     email: profile.emails[0].value,
                     password: crypto.randomBytes(20).toString('hex')  // crypto used to create some randome password
-                })
-                .then((user)=>{
-                    return done(null, user); 
+                })  
+                .then((user)=>{  // user created and added in User collection (create function creates & then adds user in User collection)
+                    return done(null, user);   
                 })
                 .catch((err)=>{
                     console.log('error in creating user google strategy-passport', err); return;

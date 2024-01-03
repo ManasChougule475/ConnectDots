@@ -73,10 +73,10 @@ module.exports.create =  async function(req, res){
                     });
                 }
                 req.flash('success', 'Comment published!');
-                return res.redirect('/');
+                return res.redirect('back');
             }
     } catch (error) {
-        // console.log(error);
+        console.log(error);
         req.flash('error', err);
         return;
     }
@@ -129,7 +129,7 @@ module.exports.destroy =  async function(req,res){
             return res.redirect('back');
         }
     } catch (error) {
-        // console.log('Error' , error);
+        console.log('Error' , error);
         req.flash('error', err);
         return;
     }

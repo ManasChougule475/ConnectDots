@@ -4,10 +4,11 @@
 </h1>
 
 
+<!-- <a href="https://web.whatsapp.com/send?text=Yes" class="bla">Whatsapp link</a> -->
+
 <div id = "home-container">
     
     <section id="feed-posts">
-
         <h4>Posts</h4>
         <% if(locals.user) {%>
         <form action="/posts/create" id="new-post-form" method="POST">
@@ -15,7 +16,6 @@
             <input type="submit" value="Post">
         </form>
         <% } %>
-    
     
         <div id="posts-list-container">
             <ul>
@@ -29,12 +29,21 @@
     
 
 
-
     <div id="sidebar-container">
+        <% if(locals.user) {%>
+            <strong>
+                <a href="/users/pending-friend-requests/">Friend Requests :<%=total_pending_requests%></a>
+                <a href="/friends/close-friends/">Close Friends</a>
+            </strong> 
+        <%}%>
+
+
+
+        
         <% if(locals.user) {%>
             <div id="friends-container" class="user-list">
                 <h2>Friends:</h2>
-                <ul>
+                <ul>                       
                     <% for(friend of all_friends){ %>
                         <% if (friend.to_user.name != locals.user.name) {%>
                             <li><p class="user-item"><a href="/users/profile/<%= friend.to_user.id %>"><%= friend.to_user.name %></a></p></li>
@@ -79,7 +88,7 @@
 <script src="<%= assetPath('/js/chat_engine.js') %>" ></script>
 <% if (locals.user){ %>
     <script>
-        new ChatEngine('user-chat-box', '<%= locals.user.email %>')
+        new ChatEngine('user-chat-box', '<%= locals.user.email %>', null)
     </script>
 <% } %>
 

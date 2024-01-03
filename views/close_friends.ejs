@@ -1,0 +1,33 @@
+<h4> Close Friends</h4>
+<% for(close_friend of all_close_friends){ %>
+    <li><p class="user-item">
+        <a href="/users/profile/<%= close_friend.id %>"><%= close_friend.name %></a>
+        <a class="toggle-friend-btn" href="/friends/add-close-friend/?close_friend_id=<%=close_friend.id%>&user_id=<%=locals.user.id%>">Remove</a>
+    </p></li>
+<% } %>
+<h4>Suggested</h4>
+<% for(friend of all_friends){ %>
+    <% if (friend.to_user.name != locals.user.name) {%>
+        <% if(friend.closeFriendStatus_fromUser_to_toUser==0) {%>
+            <li><p class="user-item">
+                    <a href="/users/profile/<%= friend.to_user.id %>"><%= friend.to_user.name %></a>
+                    <a class="toggle-friend-btn" href="/friends/add-close-friend/?close_friend_id=<%=friend.to_user.id%>">Add</a>
+            </p></li>
+        <%}%>
+    <% } else {%>
+        <% if(friend.closeFriendStatus_toUser_to_fromUser==0) {%>   
+            <li><p class="user-item">  <!-- no need to pass user.id as it is  present in request.user when user signed in cause of passport.setAuthenticatedUser  -->
+                    <a href="/users/profile/<%= friend.from_user.id %>"><%= friend.from_user.name %></a>
+                    <a class="toggle-friend-btn" href="/friends/add-close-friend/?close_friend_id=<%=friend.from_user.id%>">Add</a>
+            </p></li>
+        <%}%>
+    <% } %>
+<% } %>      
+
+<script src="<%= assetPath('/js/toggle_friend.js') %>"></script>   
+<script>
+    $(".toggle-friend-btn").each(function(){
+        let self = this;
+        let toggleFriend = new ToggleFriend(self);
+    });
+</script>

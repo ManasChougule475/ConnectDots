@@ -3,20 +3,25 @@
   bottom: 10px;
   right: 10px;
   border: 1px dashed grey;
-  height: 350px;
-  width: 300px;
-  overflow: auto;
   background: white;
   padding: 5px;
   box-shadow: 1px 1px 1px 1px lightgrey;
+  max-height: 300px; /* Set a maximum height for the chat box */
+  overflow-y: auto;/*  Enable vertical scrollbar when content exceeds the max height */
+
+
+  display: flex;  
+  flex-direction: column; /* scroll bar functionality*/
 }
 #user-chat-box #chat-messages-list {
+  overflow-y: scroll;  /* scroll bar functionality*/
   list-style: none;
   padding: 10px;
-  height: 70%;
+  /* height: 70%; */
   background-color: white;
-  overflow: auto;
+
 }
+
 #user-chat-box #chat-messages-list .other-message {
   text-align: left;
   padding: 5px;
@@ -35,15 +40,19 @@
   padding: 15px;
   background-color: #a0dcff;
 }
+
 #user-chat-box #chat-message-input-container {
   height: 24%;
   width: 100%;
   display: flex;
   flex-direction: row;
+  align-items: flex-end; /* scroll bar functionality*/ 
 }
+
 #user-chat-box #chat-message-input-container #chat-message-input {
   height: 50%;
   width: 70%;
+  
 }
 #user-chat-box #chat-message-input-container #send-message {
   height: 50%;
@@ -52,4 +61,28 @@
   color: white;
   border: none;
   background: #58d258;
+}
+
+
+/* error flash message for invalid chat user is trying to send*/
+
+.flash-message {
+    padding: 10px;
+    margin: 10px;
+    border-radius: 5px;
+    color: white;
+    font-weight: bold;
+}
+
+.error {
+    background-color: #f53131; /* Red background for error messages */
+}
+
+.fadeOut {
+    animation: fadeOutAnimation 0.5s forwards;
+}
+
+@keyframes fadeOutAnimation {
+    from { opacity: 1; }
+    to { opacity: 0; }
 }
