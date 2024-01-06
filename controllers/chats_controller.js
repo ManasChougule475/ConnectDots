@@ -1,14 +1,14 @@
 const Chats = require('../models/message');
 const User = require('../models/user');
-// const { all } = require('../routes/chats');
+// const { all } = require('../routes/chats');      
 
 module.exports.getPreviousMessages =  async function(req,res){ // not wrtting code in home_controller and user profile action cause we send only one response
-
+   
     try {
         // Fetch messages from the database
         var profile_user = undefined;
         var messages;
-        var size=0;
+        var size=0;    
         var all_messages = undefined;
         if(req.params.to_user!='null'){
             messages =  new Array(10);

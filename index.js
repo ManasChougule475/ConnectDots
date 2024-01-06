@@ -2,7 +2,7 @@ const express = require('express');
 const { route } = require('./routes');
 const port = 8000;
 const app = express();
-require('./config/view-helpers')(app);   
+require('./config/view-helpers')(app);            
     
 // vim alternative setup
 require('dotenv').config();    
