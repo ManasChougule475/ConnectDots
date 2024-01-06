@@ -8,7 +8,7 @@ module.exports.getPreviousMessages =  async function(req,res){ // not wrtting co
         // Fetch messages from the database
         var profile_user = undefined;
         var messages;
-        var size=0;    
+        var size=0;
         var all_messages = undefined;
         if(req.params.to_user!='null'){
             messages =  new Array(10);

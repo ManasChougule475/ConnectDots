@@ -79,7 +79,7 @@ class ChatEngine {
         this.chatBox = $(`#${chatBoxId}`),
         this.userEmail = userEmail,
         this.to_user=toUser,
-        this.socket = io.connect('http://localhost:5000', { transports: ['polling'] });
+        this.socket = io.connect('http://13.127.17.176:5000', { transports: ['polling'] });
         if (this.userEmail) {
             this.fetchPreviousMessages();
             this.connectionHandler();
