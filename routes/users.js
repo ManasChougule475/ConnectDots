@@ -2,6 +2,15 @@ const express = require('express');
 const router = express.Router(); // this const router is limited to this module only
 const usersController = require('../controllers/users_controller');
 const passport = require('passport');
+  
+// Define middleware to check if the user is logged in
+function requireLogin(req, res, next) {
+    if (req.user && req.user._id) {
+        return next();
+    } else {         
+        return res.redirect('/');
+    }
+}
 
 // router.get('/profile'  ,  usersController.profile);
 // router.get('/profile' , passport.checkAuthentication ,  usersController.profile);  // error: route.get() requires a callback function but got a [object undefined]
@@ -11,7 +20,6 @@ router.get('/profile/:id' , (req,res,next)=>{
     }
     return res.redirect('/users/sign-in'); 
 },  usersController.profile);
-
 
 router.post('/update/:id' , (req,res,next)=>{  // now to access the profile user need to sign in first
     if(req.isAuthenticated()){
@@ -49,17 +57,21 @@ router.get('/reset-password/:user_name/:user_email/:token' , usersController.res
 router.post('/change-password/:user_email/:token' , usersController.changePass);
 
 
-
-
-
-//friendship:-
-router.get('/pending-friend-requests' , usersController.friendRequests);
-
-
 // verify or confirm email while registration
 router.get('/verify-my-email-address/:user_email/:token',usersController.verifyMyEmailAddress);
 
 router.get('/send-verification-email/:user_email/',usersController.sendVerificationEmail);
 
+//block user
+router.get('/blockUser/',usersController.blockUser)
+
+// display all users
+// displayAll
+router.use(requireLogin);
+router.get('/allUsers' , usersController.displayAllUsers);
+
+// display all notifications related to post/comments liked
+router.get('/allNotifications' , usersController.displayAllNotifications);
+router.get('/pending-friend-requests' , usersController.friendRequests);
 
 module.exports = router;    

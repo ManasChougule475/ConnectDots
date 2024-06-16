@@ -1,15 +1,35 @@
+<link rel="stylesheet" href="<%= assetPath('/css/home.css') %>" >
 <%if (locals.user){%>
     <h1>
         <%= title %>
     </h1>
+    <div class="friends-container">
 
-    <% for (token of pendingFriendshipRequests) {%>
-        <li>
-            <a href="/users/profile/<%= token.fromUser.id %>"><%=token.fromUser.name%></a>
-            <a href="/friends/add-friend-response/?from_user=<%=token.fromUser.email%>&to_user=<%=locals.user.email%>&value=<%=true%>&token=<%=token%>">Accept</a>
-            <a href="/friends/add-friend-response/?from_user=<%=token.fromUser.email%>&to_user=<%=locals.user.email%>&value=<%=false%>&token=<%=token%>">Reject</a>
-        </li>
+        <div class="friend-request-conatiner" >
+            <h2>Friend Requests Received : <%= total_friend_requests_received %></h2>
+            <% for (token of pendingFriendshipRequests) {%>
+                <li>
+                    <a href="/users/profile/<%= token.fromUser.id %>">
+                        <%=token.fromUser.name%>
+                    </a>&nbsp;&nbsp;&nbsp;&nbsp;
+                    <button><a href="/friends/add-friend-response/?from_user=<%=token.fromUser.email%>&to_user=<%=locals.user.email%>&value=<%=true%>&token=<%=encodeURIComponent(JSON.stringify(token))%>">Accept</a></button>&nbsp;&nbsp;&nbsp;&nbsp;
+                    <!-- <button><a href="/friends/add-friend-response/<%=encodeURIComponent(token.fromUser.email)%>/<%=encodeURIComponent(locals.user.email)%>/<%=true%>/<%=token%>">Accept</a></button>&nbsp;&nbsp;&nbsp;&nbsp; -->
+                    <button><a href="/friends/add-friend-response/?from_user=<%=token.fromUser.email%>&to_user=<%=locals.user.email%>&value=<%=false%>&token=<%=encodeURIComponent(JSON.stringify(token))%>">Reject</a></button>
+                </li>
+            <%}%>
+        </div>
+
+        <div class="friend-request-conatiner" >
+            <h2>Friend Requests Sent : <%= total_requests_send_still_pending %></h2>
+            <% for (user of requests_send_still_pending) {%>
+                <li>
+                    <a href="/users/profile/<%= user.id %>"><%=user.name%></a>  
+                </li>
+            <%}%>
+
+        </div>
+
+    </div>
+
     <%}%>
-<%}%>
-
 

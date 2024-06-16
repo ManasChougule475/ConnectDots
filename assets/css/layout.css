@@ -8,3 +8,7 @@ body {
 body #layout-main {
   color: rgb(14, 15, 14);
 }
+
+#noty_layout__topRight{
+    top : 55px !important;
+}

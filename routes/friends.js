@@ -11,5 +11,6 @@ router.get('/add-friend-response', friendsController.addFriendResponse);
 router.get('/close-friends/',friendsController.closeFriends);  
 router.get('/add-close-friend/',friendsController.addOrRemoveCloseFriend);
 
+router.get('/allFriends', friendsController.displayAllFriends);
 
-module.exports = router;             
+module.exports = router;               

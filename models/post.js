@@ -22,10 +22,15 @@ const postSchema = new mongoose.Schema({
             type: mongoose.Schema.Types.ObjectId,
             ref: 'Like'
         }
-    ]
+    ],
+    isFeatured: {
+        type: Boolean,
+        default: false // Default to false, meaning the post is not featured unless set otherwise
+    }
+
 },{
-    timestamps: true
-});
+    timestamps: true  // automatically creates and updates the createdAt field when saving a new post.
+});  
 
 const Post = mongoose.model('Post', postSchema);
 module.exports = Post;

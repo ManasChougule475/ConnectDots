@@ -5,30 +5,30 @@ const queue = require('../config/kue');
 const commentEmailWorker = require('../workers/comment_email_worker');
 const Like = require('../models/like')
 
+function formattedDateTime(){
+    const date = new Date(); 
+    const hours = date.getHours(); 
+    const minutes = date.getMinutes(); 
+    const amOrPm = hours >= 12 ? 'pm' : 'am'; 
+    const formattedTime = `${hours % 12 || 12}:${minutes.toString().padStart(2, '0')}${amOrPm}`; 
+    const day = date.getDate(); 
+    const month = date.getMonth() + 1; 
+    const year = date.getFullYear();
+    const formattedDate = `${day}/${month}/${year}`; 
+
+    const formattedDateTime2 = `${formattedTime} ${formattedDate}`; 
+    
+    return formattedDateTime2;
+}
+
 module.exports.create =  async function(req, res){
-    // Post.findById(req.body.post)
-    // .then((post)=>{
-    //         if(post){ 
-    //             Comment.create({
-    //                 content: req.body.content,
-    //                 post: req.body.post,
-    //                 user: req.user._id
-    //             })
-    //             .then((comment)=>{
-    //                 post.comments.push(comment);
-    //                 post.save();
-    //                 return res.redirect('/');
-    //             })
-    //             .catch((err)=>{
-    //                 res.redirect('/');
-    //             })
-    //         }
-    // });
 
     
     try {
+            
             let post = await Post.findById(req.body.post);
             if(post){
+                
                 let comment = await Comment.create({
                     content : req.body.content,
                     user : req.user._id,
@@ -36,32 +36,82 @@ module.exports.create =  async function(req, res){
                 });
                 post.comments.push(comment);
                 post.save();
+
+                
+                post = await post.populate('user' , 'name email notifications isAnyNotificationReceived  countOfNewlyReceivedNotifications'); 
                 
 
-
-                post = await post.populate('user' , 'name email'); // post in frot of await is post id & result post is populated one 
-                commentsMailer.newComment(post , comment.content);  // email for post is delivered faster while email for comment is delievered delayed
-
-                // comment = await comment.populate('user' , 'name email'); or you use :-
-                comment = await comment   // Multiple populates - mongoosejs  
-                .populate([{  // use this syntax else :- TypeError: comment.populate(...).populate is not a function
+                
+                
+                comment = await comment   
+                .populate([{  
                     path: 'user',    
                     model: 'User'
                 },{
                     path: 'post',
                     model: 'Post',        
-                }]);  
+                }]); 
 
-                // commentsMailer.newComment(comment);  // email is delievered without any delay , flow of making comment :- commentMailer.newComment ->  nodeMailer.transporter.sendMail()
-                let job = queue.create('emails' , comment).save(function(err){  // delivered slower/delayed
+                comment = await comment.populate('user','notifications isAnyNotificationReceived  countOfNewlyReceivedNotifications')
+                if(!post.post){ 
+                    var formattedDateTime2 = formattedDateTime()
+                    let shortContent1 = comment.content.length > 15 ? comment.content.substring(0, 15) + '...' : comment.content;
+                    let shortContent2 = post.content.length > 15 ? post.content.substring(0, 15) + '...' : post.content;
+                    
+                    var notification1 = await Notification.create({
+                        to_user : post.user._id,
+                        notification : `has made a new comment '${shortContent1}' on your post '${shortContent2}'!`,
+                        from_user : comment.user._id,
+                        onModel:'None',
+                        count : 9,
+                        time : formattedDateTime2   
+                    })
+                    
+                    if(post.user.notifications.length>= 25){
+                        let firstOne = post.user.notifications.shift();
+                        Notification.findByIdAndDelete(firstOne._id.toString())
+                        .catch((err) => {
+                            console.error('Error deleting notification:', err);
+                        });
+                    }
+                    post.user.notifications.push(notification1.id)
+
+                    post.user.isAnyNotificationReceived = true;
+                    post.user.countOfNewlyReceivedNotifications += 1;
+                    post.user.save()
+
+                    var notification2 = await Notification.create({
+                        to_user : comment.user._id,
+                        notification : `You made a new comment '${shortContent1}' on post '${shortContent2}' of `,
+                        from_user : post.user._id,
+                        onModel:'None',
+                        count : 10,
+                        time : formattedDateTime2   
+                    })
+                    if(comment.user.notifications.length>= 25){
+                        let firstOne = comment.user.notifications.shift();
+                        Notification.findByIdAndDelete(firstOne._id.toString())
+                        .catch((err) => {
+                            console.error('Error deleting notification:', err);
+                        });
+                    }
+                    comment.user.notifications.push(notification2.id)
+                    comment.user.isAnyNotificationReceived = true;
+                    comment.user.countOfNewlyReceivedNotifications += 1;
+                    comment.user.save()
+                }
+
+
+                
+                let job = queue.create('emails' , { type: 'comment', comment: comment.content , post:post }).save(function(err){  
                     if(err){
-                        console.log('Error in sending to the queue');
+                        
                         return;
                     }
-                    console.log('job enqueued' , job.id);  // here comment is made immediately & comment_email_mailer sends the id of corres. job as soon as comment is made but email gets delayed(make multiple comment faster & check)
-                }) // form of making comment is comment_email_worker -> commentMailer.newComment ->  nodeMailer.transporter.sendMail()
+                    
+                }) 
 
-
+                
 
                 
                 if (req.xhr){
@@ -76,29 +126,15 @@ module.exports.create =  async function(req, res){
                 return res.redirect('back');
             }
     } catch (error) {
-        console.log(error);
-        req.flash('error', err);
+        
+        req.flash('error', error);
         return;
     }
 }
 
 
 module.exports.destroy =  async function(req,res){
-    // Comment.findById(req.params.id)
-    // .then((comment)=>{
-    //     if(comment.user == req.user.id){
-    //         // console.log(req.user.id , comment.user);
-    //         let postId = comment.post;
-    //         comment.deleteOne();
-    //         Post.findByIdAndUpdate(postId , {$pull : {comments : req.params.id}})
-    //         .then((post)=>{
-    //             return res.redirect('back');
-    //         })            
-    //     }
-    //     else{
-    //         return res.redirect('back'); 
-    //     }
-    // });
+    
 
     try {
         let comment = await Comment.findById(req.params.id);
@@ -107,11 +143,42 @@ module.exports.destroy =  async function(req,res){
             comment.deleteOne();     
             let post = await Post.findByIdAndUpdate(postId , {$pull :{comments:req.params.id}});
 
-            // CHANGE :: destroy the associated likes for this comment
+            
             await Like.deleteMany({likeable: comment._id, onModel: 'Comment'});
 
+            post = await post.populate('user' , 'name notifications isAnyNotificationReceived  countOfNewlyReceivedNotifications');
+            comment = await comment.populate('user','notifications isAnyNotificationReceived  countOfNewlyReceivedNotifications')
+            let shortContent1 = comment.content.length > 15 ? comment.content.substring(0, 15) + '...' : comment.content;
+            let shortContent2 = post.content.length > 15 ? post.content.substring(0, 15) + '...' : post.content;
+            var notification1 = await Notification.findOne({
+                to_user : post.user._id,
+                notification : `has made a new comment '${shortContent1}' on your post '${shortContent2}'!`,
+                from_user : comment.user._id,
+                count : 9
+            })
+            if(notification1){
+                post.user.notifications = post.user.notifications.filter((ele)=>ele._id.toString()!==notification1.id);
+                notification1.deleteOne();
+            }
+            post.user.isAnyNotificationReceived = true;
+            post.user.countOfNewlyReceivedNotifications += 1;
+            post.user.save()
 
-            // send the comment id which was deleted back to the views
+            var notification2 = await Notification.findOne({
+                to_user : comment.user._id,
+                notification : `You made a new comment '${shortContent1}' on post '${shortContent2}' of `,
+                from_user : post.user._id,
+                count : 10
+            })
+            if(notification2){
+                comment.user.notifications = comment.user.notifications.filter((ele)=>ele._id.toString()!==notification2.id);
+                notification2.deleteOne();
+            }
+            comment.user.isAnyNotificationReceived = true;
+            comment.user.countOfNewlyReceivedNotifications += 1;
+            comment.user.save()
+
+            
             if (req.xhr){
                 return res.status(200).json({
                     data: {
@@ -129,8 +196,30 @@ module.exports.destroy =  async function(req,res){
             return res.redirect('back');
         }
     } catch (error) {
-        console.log('Error' , error);
+        
         req.flash('error', err);
         return;
+    }      
+}
+
+
+
+
+module.exports.fetchNext15Comments =  async function(req,res){
+    const {postId} = req.params;
+    const { skip = 0, limit = 5 } = req.query;     
+    
+    try{
+        const comments = await Comment.find({ post: postId })    
+        .sort({ 'createdAt': -1 })
+        .skip(parseInt(skip))  // sending new 5 comments to front end , which gets appended below existing visible comments         
+        .limit(parseInt(limit)+1)
+        .populate('user likes');        
+        const hasMore = comments.length > limit;
+        
+        return res.status(200).json({comments:comments.slice(0, limit) , hasMore});    
+    }catch (error){
+        
+        return res.status(500).json({ error: 'Failed to load comments' });
     }
 }

@@ -1,5 +1,6 @@
 const mongoose = require('mongoose');
 const multer = require('multer');
+const { type } = require('os');
 const path = require('path');
 const AVATAR_PATH = path.join('/uploads/users/avatars')
 
@@ -38,7 +39,6 @@ const userSchema = new mongoose.Schema({
         {           // close friend list so each user has his independent close friend list
             type:  mongoose.Schema.Types.ObjectId,
             ref: 'User',
-
         }
     ],
 
@@ -48,13 +48,49 @@ const userSchema = new mongoose.Schema({
     },                  //  user is signed in hence user is authenticated but still unverified -> logged out user(asynchronous) & 
                         //  email address verification link is again sent to mail of the user.
 
-    // chats:[  // each user is storing his chats so that his/her chats can be fetched easily from whole chats(message) collection
-    //     {
-    //         type:mongoose.Schema.Types.ObjectId,
-    //         ref:'Message'
-    //     }
-    // ]
+    notifications : [{
+        type: mongoose.Schema.Types.ObjectId,
+        ref : 'Notification'
+    }],
 
+    friendship_requests_sent :[{ // friendship_requests_sent from current user to other users (user2) , array contians id of user2 if request sent is still in pending state
+        type:  String 
+    }],
+
+    isLoggedIn : {
+        type:Boolean,
+        default:false
+    },
+    
+    req :{
+        type:Object
+    },
+
+    iAmCloseFriendOf :[  // this list represents users_who_added_me_in_their_close_friends_list
+        {
+            type:  mongoose.Schema.Types.ObjectId,
+            ref: 'User'
+        }
+    ],
+
+    otp : { // otp to verify mobile number of user 
+        type : Number,
+        default : 0
+    },
+
+    isAnyNotificationReceived : {
+        type:Boolean,
+        default:false
+    },
+
+    countOfNewlyReceivedNotifications : {
+        type : Number,
+        default : 0
+    },
+    totalFriendRequestsReceived: {
+        type : Number,
+        default : 0
+    },
 
 },{
     timestamps : true

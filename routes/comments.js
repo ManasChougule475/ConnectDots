@@ -21,5 +21,12 @@ router.get('/destroy/:id', (req,res,next)=>{
     return res.redirect('/users/sign-in'); 
 } , commentsController.destroy);
 
+router.get('/fetchNext15Comments/:postId', (req,res,next)=>{ 
+    if(req.isAuthenticated()){
+        return next(); 
+    }
+    return res.redirect('/users/sign-in'); 
+} , commentsController.fetchNext15Comments);
+
   
 module.exports = router;

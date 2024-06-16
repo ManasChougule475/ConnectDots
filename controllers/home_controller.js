@@ -1,93 +1,166 @@
-// module.exports.home = function(req , res){    
-//     return res.render("home" , {
-//         title:'Home'
-//     })
-// }
-
 const Post = require('../models/post');
-const User = require('../models/user');
 const Chats = require('../models/message');
+const User = require('../models/user');
+const Like = require('../models/like');    
+const Comment = require('../models/comment');
+const mongoose = require('mongoose');
 
-module.exports.home =  async function(req,res){
+const getFriends = async (userId)=>{
+    var friendIds=[];
+    var user;
+    user = await User.findById(userId).populate('friendships');
+    
+    for(let i=0; i<user.friendships.length;i++){
+        if(!user.friendships[i].from_user.equals(userId)){
+            friendIds.push(user.friendships[i].from_user)
+        }else{
+            friendIds.push(user.friendships[i].to_user)
+            
+        }
+    }
+    
+    return friendIds;
+}
+    const getPostIds = async (userId, pageNo,offset) => {
+        var postIds  =[];
+        var friendIds = await getFriends(userId);
+        
 
-    // Post.find({})
-    // .populate('user')// to preloading  or prepopulating  multiple models
-    // .populate({
-    //     path : 'comments',
-    //     populate :{  // to further polulate (can do as much nesting as want) , nested prepopulating
-    //         path :'user'
-    //     }
-    // })
-    // .exec()
-    // .then((posts)=>{
-    //     User.find({})  
-    //     .then((users)=>{
-    //         return res.render('home' , {
-    //             title : 'Codeial | Home',
-    //             posts : posts,
-    //             all_users :users,
-    //         });
-    //     })
-    // });
+        postIds = await Post.aggregate([
+            { $match: { user: { $in: friendIds } } }, 
+            { $sort: { createdAt: -1 } },
+            { $skip: 0 },  
+            { $project: { _id: 1 } }  
+            
+        ]);
 
+        
+        postIds = postIds.map(item => item._id.toString());
+        
+        return postIds;
+    };
 
+module.exports.home =  async function(req,res){                                  
+    
+    
+    var pageNo =  parseInt(req.query.pageNo) || 1;
+    var posts;
+     
+    const pageSize = 5 ;
+    const offset = (pageNo-1)*pageSize;
+    var postIds=[];
     try{
-        let posts = await Post.find({})
-        .sort('-createAt')
+        if(req.user){
+            postIds = await getPostIds(req.user._id, pageNo,offset);  
+        
+            let user = await User.findOne(req.user._id)
+            .populate({ 
+                path: "pendingFriendshipRequests",             
+                populate: {
+                  path: 'fromUser',    
+                }
+            })
+            .populate({
+                path: "pendingFriendshipRequests",             
+                populate: {
+                  path: 'access_token',
+                }
+            })
+            .populate('friendship_requests_sent');    
+        
+            user.totalFriendRequestsReceived = user.pendingFriendshipRequests.length;;
+            user.save();
+
+        }else{
+            if(req.customUser){
+                postIds = await getPostIds(req.customUser.userId, pageNo,offset);
+            }
+        }
+
+        var size;
+        if(50-postIds.length<0){
+            size=0
+        }else{
+            size = 50-postIds.length
+        }
+        
+        let admin = await User.findOne({email: "manaschougule2019@gmail.com"}) 
+        
+        const likes = await Like.find({ user: admin._id, onModel: 'Post' });
+
+        
+        const likedPostIds = likes.map(like => like.likeable.toString());
+        
+        const comments = await Comment.find({ user: admin._id });
+
+        
+        const commentedPostIds = comments.map(comment => comment.post.toString());
+
+        
+        const liked_and_commented_PostIds = likedPostIds.filter(postId => commentedPostIds.includes(postId));  
+
+        
+        const filteredPostIds = liked_and_commented_PostIds.filter(id => !postIds.includes(id));
+
+        const featuredPostIds = filteredPostIds.slice(0, size); 
+
+        const friends_and_featured_postIds = [...postIds , ...featuredPostIds]
+        
+        const objectIdArray = friends_and_featured_postIds.map(id => new mongoose.Types.ObjectId(id));
+
+        if(50-friends_and_featured_postIds.length<0){
+            size=0
+        }else{
+            size = 50-friends_and_featured_postIds.length
+        }
+        
+        const randomPostIds = await Post.aggregate([
+            { $match: { _id: { $nin: objectIdArray } } },  
+            { $sample: { size: size } },
+            { $project: { _id: 1 } } 
+        ])       
+        .exec();
+
+        posts = await Post.find({ _id: { $in: [...randomPostIds,...objectIdArray] } }) 
+        .skip(offset)
+        .limit(11)    
+        .sort({'createdAt': -1})
         .populate('user')             
         .populate({
             path : 'comments' ,
             populate : {
-                path : 'user'  // user who posted a particular comment(check comment schema)
-            }
+                path : 'user'  
+            }   
         })
         .populate({
             path : 'comments' ,
+            options: { sort: { 'createdAt': -1 }, limit: 5 }, 
             populate : {
-                path : 'likes' // likes on a particular comment
+                path : 'likes'
             }
         })
         .populate('likes')
-
-        let users = (await User.find({}))
-
-        // friends
-        let friends;
-        let pending_requests;
-        if (req.user){
-            let current_user = await User.findById(req.user._id)
-            .populate({
-                path: 'friendships',
-                populate: {
-                    path: 'from_user'
-                }
-            })
-            .populate({
-              path: "friendships",             
-              populate: {   
-                path: 'to_user',
-              }
-            })
-            .populate("pendingFriendshipRequests");     // populating pendingFriendshipRequests on signed in user
-            friends = current_user.friendships; // all friends of signed in user
-            pending_requests = current_user.pendingFriendshipRequests.length //
-            console.log('pending_requests',pending_requests);
+      
+        var posts_length = posts.length
+        if (posts.length>=5){
+            posts.splice(5)
         }  
 
         const messages = await Chats.find().exec(); 
 
-        return res.render('home' , {
-            title : 'Codeial | Home',
+        return res.render('home' , {   
+            title : 'ConnectDots | Home',
             posts : posts , 
-            total_pending_requests : pending_requests, // count of total_friend_requests received which are pending
-            all_users : users ,
-            all_friends : friends ,
-            chats : messages
+            chats : messages,
+            pageNo : pageNo || 1,
+            posts_length : posts_length,
         }); 
 
     }
     catch(err){
-        console.log(err);
+        
         return;
     }
 }
+
+

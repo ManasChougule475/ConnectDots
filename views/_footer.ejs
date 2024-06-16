@@ -1,7 +1,7 @@
 <footer id="layout-footer">
     <div>
         <p>
-            &#169; Codeial a Social Media Website. All Rights Reserved
+            &#169; ConnectDots a Social Media Website. All Rights Reserved
         </p>
     </div>
 
@@ -12,7 +12,9 @@
                     <a href="/">Home</a>
                 </li>
                 <li>
-                    <a href="/users/sign-in/">Profile</a>
+                    <% if(typeof user !== 'undefined' && user){%>
+                        <a href="/users/profile/<%=user.id%>">Profile</a>
+                    <%}%>
                 </li>
             </ul>
         </nav>

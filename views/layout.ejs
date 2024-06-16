@@ -12,6 +12,7 @@
         <link rel="stylesheet" href="<%= assetPath('/css/footer.css') %>">
 
         <%- style %>
+
     </head>
     <body>
         
@@ -33,7 +34,11 @@
                     text: "<%= flash.success %>",
                     type: 'success',
                     layout: 'topRight',
-                    timeout : 1500
+                    timeout : 1500,
+                    // animation: {
+                    //     open: 'animated fadeInRight', 
+                    //     close: 'animated fadeOutRight' 
+                    // }
                 }).show();
             <% } %>
             <% if(flash.error && flash.error.length >0) {%>
@@ -42,11 +47,10 @@
                     text: "<%= flash.error %>",
                     type: 'error',
                     layout: 'topRight',
-                    timeout : 1500
+                    timeout : 1500,
                 }).show();
             <% } %>
         </script>
-
     </body>
 </html>
 

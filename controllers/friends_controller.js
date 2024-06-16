@@ -4,35 +4,89 @@ const commentsMailer = require('../mailers/comments_mailer');
 const Token = require('../models/token');
 const crypto = require('crypto');
 const User = require('../models/user');
+const mongoose = require('mongoose');
+
+
+function formattedDateTime(){
+    const date = new Date(); 
+    const hours = date.getHours(); 
+    const minutes = date.getMinutes(); 
+    const amOrPm = hours >= 12 ? 'pm' : 'am'; 
+    const formattedTime = `${hours % 12 || 12}:${minutes.toString().padStart(2, '0')}${amOrPm}`; 
+    const day = date.getDate(); 
+    const month = date.getMonth() + 1; 
+    const year = date.getFullYear();
+    const formattedDate = `${day}/${month}/${year}`; 
+
+    const formattedDateTime2 = `${formattedTime} ${formattedDate}`; 
+    
+    return formattedDateTime2;
+}
+
 module.exports.addFriend = async function(request , response){   
 
     try {
+            
 
-            let deleted = false;
+            let deleted = false;    
            
             let fromUser = await Users.findById(request.user);
             let toUser = await Users.findById(request.query.id);
+            let friendship;
             
             let existingFriendship = await Friendships.findOne({
                 from_user : request.user,
                 to_user : request.query.id,
             });
             
-            //special case :- friendship request is from request.query.id(user in friends list) to request.user(signed in user)
-            if(!existingFriendship){  // if existingFriendship is undefined their is still chance that friendship exists but from query.id to user(signed in user)  else even clicking on remove friendship it will not remove it
+            
+            if(!existingFriendship){  
                 existingFriendship = await Friendships.findOne({
                     from_user : request.query.id,
                     to_user : request.user,  
                 });
             }   
         
+            
+            
+            
+            if(existingFriendship && request.query.action==='add'){
+                
+
+                if(request.xhr){
+                    return response.status(200).json({    
+                        message : "Request Successful",
+                        data:{
+                            deleted : false,
+                            flag: 1
+                        } 
+                    });
+                }
+    
+            }
+
+            if(!existingFriendship && request.query.action==='remove'){
+                
+
+                if(request.xhr){
+                    return response.status(200).json({    
+                        message : "Request Successful",
+                        data:{
+                            deleted : false,
+                            flag: 0
+                        } 
+                    });
+                }
+            }
+
+
             if(existingFriendship){
                 toUser.friendships.pull(existingFriendship._id);
                 fromUser.friendships.pull(existingFriendship._id);
-                existingFriendship.deleteOne();  // this will remove existingFriendship from colletion or await await Friendships.deleteOne(existingFriendship);
+                existingFriendship.deleteOne();  
                 deleted = true;
 
-        // in addFriend action :- if in case if friend is deleted from friends list then also delete it from close friends list if he is present in close friends list
+        
                 const istoUserInCloseFriendsOfFromUser = fromUser.closeFriends.some( (closeFriend) => closeFriend._id.equals(toUser._id) );   
                 const isFromUserInCloseFriendsOftoUser = toUser.closeFriends.some( (closeFriend) => closeFriend._id.equals(fromUser._id) );
 
@@ -51,41 +105,85 @@ module.exports.addFriend = async function(request , response){
                     ); 
                     request.flash('success', 'Close Friend Removed!');
                 }
-                else if(isFromUserInCloseFriendsOftoUser){  // can't do else if
+                else if(isFromUserInCloseFriendsOftoUser){  
                     toUser.closeFriends = toUser.closeFriends.filter(
                         (closeFriend) => !closeFriend._id.equals(fromUser._id)
                     );
                     request.flash('success', 'Close Friend Removed!');
-                } // ,Error : ParallelSaveError: Can't save() the same doc multiple times in parallel. occurs if saving twice , remove save if you are saving multiple times
+                } 
 
-                await fromUser.save();  // save updated fromUser & toUSer
+                await fromUser.save();  
                 await toUser.save();
 
                 request.flash('success', 'Friend Removed!');
             }else{
+    
+                var formattedDateTime2 = formattedDateTime()
+                var notification1 = await Notification.create({
+                    to_user : toUser._id,
+                    notification : `has sent you a friend request! Please accept.`,
+                    from_user : fromUser._id,
+                    onModel:'None',
+                    count : 6,
+                    time : formattedDateTime2   
+                })
+                if(toUser.notifications.length>= 25){
+                    let firstOne = toUser.notifications.shift();
+                    Notification.findByIdAndDelete(firstOne._id.toString())
+                    .catch((err) => {
+                        console.error('Error deleting notification:', err);
+                    });
+                }
+                toUser.notifications.push(notification1.id)
+                toUser.isAnyNotificationReceived = true;
+                toUser.countOfNewlyReceivedNotifications += 1;
 
-                // Generating new token and storing it in DB
-                const randomToken = crypto.randomBytes(20);//.toString('hex')
+                
+                const randomToken = crypto.randomBytes(20);
                 let token  = await Token.create({
                 access_token: randomToken,
                 });    
-                commentsMailer.addFriendEmail(fromUser ,toUser,token); // calling mailer here
-                token.fromUser = fromUser;   // ******NOTE:- after sending token to email , i updated token & added fromUser init token with fromUSer field not creating any link for anchor tags in email(may need to use token filter)
+                commentsMailer.addFriendEmail(fromUser ,toUser,token); 
+                token.fromUser = fromUser;   
                 await token.save();
-                toUser.pendingFriendshipRequests.push(token);  // *****    
+                toUser.pendingFriendshipRequests.push(token);  
                 toUser.save();
-                // console.log("Total Friendship requests received by toUser",toUser.pendingFriendshipRequests.length);  // always 1
+                
 
-                friendship = await Friendships.create({  // create fun. creates object 'friendship' of collection Friendships & also adds this object into the collection
+                friendship = await Friendships.create({  
                     to_user : toUser.id,
                     from_user : fromUser._id,
                     status :-1,    
                     closeFriendStatus_fromUser_to_toUser:0,
-                    closeFriendStatus_toUser_to_fromUser:0 // // you have to define this at the time of object creation else default value will not be zero 
+                    closeFriendStatus_toUser_to_fromUser:0 
                 });       
-                // not adding friendship in friendships list of toUser and fromUser cause status is request sent/pending(-1)
+                
+
+                var formattedDateTime2 = formattedDateTime()
+                var notification = await Notification.create({
+                    to_user : fromUser._id,
+                    notification : `Your Friend request has been sent to ${toUser.name}. 😊`,
+                    from_user : fromUser._id,
+                    onModel:'None',
+                    count : 8,
+                    time : formattedDateTime2   
+                })
+                if(fromUser.notifications.length>= 25){
+                    let firstOne = fromUser.notifications.shift();
+                    Notification.findByIdAndDelete(firstOne._id.toString())
+                    .catch((err) => {
+                        console.error('Error deleting notification:', err);
+                    });
+                }
+                fromUser.notifications.push(notification.id)
+                fromUser.friendship_requests_sent.push(toUser._id.toString())
+                fromUser.isAnyNotificationReceived = true;
+                fromUser.countOfNewlyReceivedNotifications += 1;
+                fromUser.save()
             }
             if(request.xhr){
+                
+                
                 return response.status(200).json({    
                     message : "Request Successful",
                     data:{
@@ -103,78 +201,145 @@ module.exports.addFriend = async function(request , response){
 
 
     } catch (error) {
-        console.log(error);
+        
         return response.json(500, {
-            message: 'Internal Server Errorrrr'
+            message: 'Internal Server Error'
         });
     }
 
 }
 
-
-
 module.exports.addFriendResponse = async function(request , response){
+    
+    var new_obj;
+    var str;   
+    if(request.cookies.token_id && Object.keys(request.query).length === 0){  
+        
+        new_obj=new mongoose.Types.ObjectId(request.cookies.token_id)
+        
+    }else{     
+        str = JSON.parse(request.query.token)._id 
+        
 
-try {
-    let { request_query } = request.query
-    let token = await Token.findOne({ token: { $eq: request_query } }) // ********findOne(request.query.token) not works
-    // console.log('token',token);    
-    if(token==null){
-        request.flash('error','cannot perform this action again');  // token is null & not exist in Token collection (**link is expired cause you already clicked on it)
-        return response.redirect('/');    
+        new_obj=new mongoose.Types.ObjectId(str)
+        response.cookie('token_id' ,str);        
+        
+                 
+        if (request.cookies.fromEmail && request.cookies.fromEmail!=request.query.from_user) {
+            response.cookie('fromEmail', request.query.from_user);        
+            return response.redirect('/friends/add-friend-response/');  
+        }else{
+            response.cookie('fromEmail' ,request.query.from_user); 
+            
+        }    
+        response.cookie('toEmail' ,request.query.to_user); 
+        response.cookie('value' ,request.query.value); 
+         
     }
-    // console.log("request.isAuthenticated()",request.isAuthenticated());
+try {                                               
+  
+    let token = await Token.findById(new_obj._id)   
+    
+    if(token==null){                             
+        request.flash('error','cannot perform this action again'); 
+        return response.redirect('/');             
+    }     
 
-    response.cookie('fromEmail' ,request.query.from_user);  
-    response.cookie('toEmail' ,request.query.to_user); // this is stored in cookie , no need to send this values to different pages through a request.qyery or params 
-    response.cookie('value' ,request.query.value); // stored on cookie to access this things on any page of server
-    // console.log(request.cookies.fromEmail);
-    // console.log(request.cookies.toEmail);
-    // console.log(request.cookies.value); // *********cookies are undefined still , when we make call to same action then it will contain value ; we are doing this cause after creating or updating cookie it will not get updated immediately so need to make one more call to same action
-    if(!request.isAuthenticated()){   
+
+    if(!request.isAuthenticated()){                            
         request.flash('error','Please Sign-In First');
-        return response.redirect('/users/sign-in/');    // sign in further call to this same action 
-    }
-    if(request.cookies.fromEmail == undefined){  // calling to same action again so cookies will get values
-        return response.redirect('/friends/add-friend-response/');
-    } //*******/ no need to send queries as they are already in cookies(but token is not in cookie & not sent from here still working?)
+        return response.redirect('/users/sign-in/');    
+    }        
+ 
+    if(request.cookies.fromEmail == undefined){  
+        
+        return response.redirect('/friends/add-friend-response/');        
+        
+    } 
     let fromUser = await Users.findOne({email:request.cookies.fromEmail});
     let toUser = await Users.findOne({email:request.cookies.toEmail});
     let friendship = await Friendships.findOne({  
-        to_user : toUser.id,  
+        to_user : toUser.id,    
         from_user : fromUser._id,
-        status :-1,
-    }/*,{$set :{'status':1}} , {new:true}*/);  // findOneAndUpdate => 2 more arguments :-{$set :{'status':1}} , {new:true}    
-    // console.log('request.cookies.value',request.cookies.value,request.query.value,typeof(request.cookies.value))  
-    // once you accept request for very first time then if later he reject that from same link even though value will remain true only
-    if(request.cookies.value==="true"){       
-        // if (friendship == null){  // NO ANY NEED cause we using token so program not reaches here
-        //     request.flash('error', "can't perform this action again");   
-        //     return response.redirect('/');   
-        //     // friendship == null cause :-
-        //     //1) toUser & fromUser both are already friends so in their friendships array(of both) the updated
-        //     //friendship object is there (with status=1 & not -1) but when toUser 2nd time clicks on anchor tag of accept in email
-        //     //the friendship is null cause staus is already updated to 1 so friendship with status -1 not exist now  
-        //     //2) toUser already rejected friend request so friendship object is already removed from collection.
-        // }
+        status :-1,    
+    }/*,{$set :{'status':1}} , {new:true}*/);     
+      
     
-        friendship.status = 1; // updateOne not working hence updated in this way 
-        await friendship.save();  // updated friendship gets saved in collection
-        toUser.friendships.push(friendship);  // by default it stores id of friendship or you can do friendship.id 
-        fromUser.friendships.push(friendship);                  
-        fromUser.save();         
-        request.flash('success', fromUser.name ,'is added to you friend list!');    
+    if(friendship && request.cookies.value==="true"){       
+    
+        friendship.status = 1; 
+        await friendship.save();  
+        toUser.friendships.push(friendship);  
+        fromUser.friendships.push(friendship);                   
+
+        var formattedDateTime2 = formattedDateTime()
+        var notification1 = await Notification.create({
+            to_user : toUser._id,
+            notification : `has been added to your friends list. You can now see their posts. 😊`,
+            from_user : fromUser._id,
+            onModel:'None',
+            count : 7,
+            time : formattedDateTime2   
+        })
+        if(toUser.notifications.length>= 25){
+            let firstOne = toUser.notifications.shift();
+            Notification.findByIdAndDelete(firstOne._id.toString())
+            .catch((err) => {
+                console.error('Error deleting notification:', err);
+            });
+        }
+        toUser.notifications.push(notification1.id)
+
+        var notification2 = await Notification.create({    
+            to_user : fromUser._id,
+            notification : `has been added to your friends list. You can now see their posts. 😊`,
+            from_user : toUser._id, 
+            onModel:'None',
+            count : 7,
+            time : formattedDateTime2   
+        })
+
+        if(fromUser.notifications.length>= 25){
+            let firstOne = fromUser.notifications.shift();
+            Notification.findByIdAndDelete(firstOne._id.toString())
+            .catch((err) => {
+                console.error('Error deleting notification:', err);
+            });
+        }
+        fromUser.notifications.push(notification2.id)
+
+        toUser.isAnyNotificationReceived = true;
+        toUser.countOfNewlyReceivedNotifications += 1;
+        fromUser.isAnyNotificationReceived = true;
+        fromUser.countOfNewlyReceivedNotifications += 1;
+        toUser.save();
+        fromUser.save();
+
+        request.flash('success', fromUser.name ,'is added to your friend list!');    
     }
-    else{
-        // if (friendship == null){ // friendship is already removed so can't reject/accept for second time
-        //     request.flash('error', "can't perform this action again"); 
-        //     return response.redirect('/');
-        // }
-        await Friendships.deleteOne(friendship)    // friendship is null now ; no need of friendship.status = 0; 
-        // friendship obj. initially added in collection Friendships at the time when fromUser made friend request to toUser is deleted now
+    else{    
+        
+        
+        
+        
+        
+        await Friendships.deleteOne(friendship)    
+        
         request.flash('success', 'Friend Request is rejected!');   
     }
-    // response.cookie('fromEmail' , null); // instead of removing the fromEmail key from cookie reset it to null
+    
+    
+    
+    
+    const isFriendRequestSent = fromUser.friendship_requests_sent.some(request => request === toUser._id.toString());
+    if (isFriendRequestSent) {
+        fromUser.friendship_requests_sent = fromUser.friendship_requests_sent.filter(request => request !== toUser._id.toString());
+    } else {
+        toUser.friendship_requests_sent = toUser.friendship_requests_sent.filter(request => request !== fromUser._id.toString());
+    }
+
+
+    
     response.clearCookie("fromEmail");
     response.clearCookie("toEmail");
     response.clearCookie("value");
@@ -182,28 +347,31 @@ try {
 
     let path_to_redirect = '/';
     if(token.fromUser){
-        path_to_redirect = 'back' // /users/pending-friend-requests/?email=<%=request.body.email%>  this is path of page which displayes friend requests 
+        path_to_redirect = 'back' 
     }
-    let deletedToken=await Token.deleteOne(token)  // deletedToken is undefined 
-    .then((data)=>{console.log(data)});    // token is deleted after very first action so can't click on accept/reject anchor tag in mail for 2nd time.  
 
-    toUser.pendingFriendshipRequests.pull(token); // *****
-    await toUser.save();  //     add await else ParallelSaveError error or save is not a function if saving above & again saving here
+    let deletedToken=await Token.deleteOne(token)  
+    
+
+    toUser.pendingFriendshipRequests.pull(token); 
+    await toUser.save();  
+    await fromUser.save();
     
     return response.redirect(path_to_redirect) ;    
     } catch (error) {
-        console.log(error);
-        // return response.json(500, {
-        //     message: 'Internal Server Errorrrr'
-        // });
+        
+        
+        
+        
         return response.redirect('/');
-    }                      
+    }                            
 }      
 
 
 module.exports.closeFriends = async function(request,response){
-    console.log('request.user._id',request.user._id);
+    
     let current_user;
+    let length=0;
     if (request.user){
         current_user = await User.findById(request.user._id)
         .populate({
@@ -224,28 +392,31 @@ module.exports.closeFriends = async function(request,response){
               path: 'closeFriendStatus_toUser_to_fromUser',
             }
           })
-        .populate({    
+        .populate({       
             path: "friendships",             
             populate: {   
               path: 'closeFriendStatus_fromUser_to_toUser',
             }
           })
         .populate('closeFriends')};     
+    
+    length = current_user.friendships.length - current_user.closeFriends.length
     return response.render('close_friends.ejs',{
         title:'Your Close Friends List',
         all_friends : current_user.friendships,
-        all_close_friends : current_user.closeFriends
+        all_close_friends : current_user.closeFriends,
+        length : length
     })
 }
 
 
 module.exports.addOrRemoveCloseFriend = async function(request,response){
     try {
-        let closeFriendDeleted=0; // not used true & false cause it is used in addFriend action & toggle_friend.js is same for both this actions 
+        let closeFriendDeleted=0; 
         let current_user = await User.findById(request.user._id).populate('closeFriends').populate('friendships');
-        let friend = await User.findById(request.query.close_friend_id);
+        let friend = await User.findById(request.query.close_friend_id).populate('iAmCloseFriendOf');
 
-        let friendship1 = await Friendships.findOne({  // same in user profile action
+        let friendship1 = await Friendships.findOne({  
             from_user: current_user.id,
             to_user: friend.id,
         });
@@ -260,54 +431,142 @@ module.exports.addOrRemoveCloseFriend = async function(request,response){
             friendship_object = friendship2;
         }
 
-        // check friend is in close friend list of current_user
-        const isFriendInCloseFriends = current_user.closeFriends.some(  // can't use current_user.closeFriends.indexOf(friend); ; indexOf can't compares objects & gives -1 always
+        
+        const isFriendInCloseFriends = current_user.closeFriends.some(  
         (closeFriend) => closeFriend._id.equals(friend._id)
         );
 
         const friendshipIndex1 = current_user.friendships.findIndex((friendship) =>friendship.equals(friendship_object));  
-        // friendshipIndex1 is -1 if the friend is not in the closefriends list of current_user  // to directly find friendship object you can use find()
+        
         const friendshipIndex2 = friend.friendships.findIndex((friendship) =>friendship.equals(friendship_object)); 
         
         const friendship = current_user.friendships[friendshipIndex1];
         
-         // first remove already existing friendship object from both the friendships array of current_user & his friend
+         
         current_user.friendships.splice(friendshipIndex1, 1);
         friend.friendships.splice(friendshipIndex2, 1);
         if (!isFriendInCloseFriends) {
             current_user.closeFriends.push(friend.id);
-            if(current_user._id.toString()==friendship.to_user.toString()){  // friendship.to_user is a buffer ckeck it's type
+            
+            friend.iAmCloseFriendOf.push(current_user._id);
+            
+            if(current_user._id.toString()==friendship.to_user.toString()){  
                 friendship.closeFriendStatus_toUser_to_fromUser= 1;
             }else{
                 friendship.closeFriendStatus_fromUser_to_toUser= 1;
             }
-            console.log('Friend is not in close friends list so added it in to Close Friends List');
-        } else { // isFriendInCloseFriends = true  
+            
+
+            current_user = await current_user.populate('notifications')
+            var formattedDateTime2 = formattedDateTime()
+            var notification = await Notification.create({
+                to_user : current_user._id,
+                notification : `has been added to your close friends list !`,
+                from_user : friend.id,
+                onModel:'None',
+                count : 12,
+                time : formattedDateTime2   
+            })
+            if(current_user.notifications.length>= 25){
+                let firstOne = current_user.notifications.shift();
+                Notification.findByIdAndDelete(firstOne._id.toString())
+                .catch((err) => {
+                    console.error('Error deleting notification:', err);
+                });
+            }
+            current_user.notifications.push(notification.id)
+
+        } else { 
             current_user.closeFriends = current_user.closeFriends.filter( (closeFriend) => !closeFriend._id.equals(friend._id) );
+            
+            friend.iAmCloseFriendOf=friend.iAmCloseFriendOf.filter((id)=>!id.equals(current_user.id));
+            
             if(current_user._id.toString()==friendship.to_user.toString()){
                 friendship.closeFriendStatus_toUser_to_fromUser= 0;
             }else{
                 friendship.closeFriendStatus_fromUser_to_toUser= 0;
             }
             closeFriendDeleted=1; 
-            console.log('Friend was already in close friend list so deleted from Close Friends List');
+            
+
+            var notification2 = await Notification.findOne({
+                to_user : current_user._id,
+                notification : `has been added to your close friends list !`,
+                from_user : friend.id,
+                count : 12
+            })
+            if(notification2){
+                current_user.notifications = current_user.notifications.filter((ele)=>ele._id.toString()!==notification2.id);
+                notification2.deleteOne();
+            }
+            
         }
-        current_user.friendships.push(friendship);   
-        friend.friendships.push(friendship);  // new object is pushed in arrays
-        await friendship.save();  // this updates object in colletion
+        current_user.friendships.push(friendship);      
+        friend.friendships.push(friendship);  
+        current_user.isAnyNotificationReceived = true;
+        current_user.countOfNewlyReceivedNotifications += 1;
+        await friendship.save();  
         await current_user.save(); 
+        await friend.save(); 
 
         if(request.xhr){  
             return response.status(200).json({    
                 message : "Request Successful",
                 data:{
-                    closeFriendDeleted : closeFriendDeleted   // giving response to toggle.js
+                    closeFriendDeleted : closeFriendDeleted   
                 } 
             });
         }
         return response.redirect('/');
     } catch (error) {
-        console.log(error);
+        
         return response.redirect('/');
     }
 }   
+
+
+
+
+module.exports.displayAllFriends =  async function(req,res){
+    let friends;
+    let pending_requests;
+    const pageSize = 7 ;
+    const pageNo =  parseInt(req.query.pageNo) || 1;
+    const offset =  pageNo ? (pageNo-1)*pageSize : 0 ; 
+    
+    if (req.user){
+        let current_user = await User.findById(req.user._id)
+        .populate({
+            path: 'friendships',
+            populate: {
+                path: 'from_user'
+            }
+        })
+        .populate({
+          path: "friendships",     
+          options: { skip : offset , limit: 15 },        
+          populate: {   
+            path: 'to_user',
+          }
+        })
+        .populate("pendingFriendshipRequests");     
+        friends = current_user.friendships; 
+        
+        pending_requests = current_user.pendingFriendshipRequests.length 
+    }
+
+    var range;
+    if (friends.length>=7){
+        range = 7
+    }else{
+        range = friends.length 
+    }
+    return res.render('friends.ejs' , { 
+        title : 'Friends',
+        all_friends : friends ,
+        total_pending_requests : pending_requests, 
+        pageNo : pageNo || 1,
+        range : range,
+        friends_length : friends.length 
+    })
+}

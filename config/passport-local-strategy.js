@@ -6,29 +6,87 @@ const User = require('../models/user');
 const { error } = require('console');
 
 
-// authentication using passport
-passport.use(new LocalStrategy({   // telling passport to use the LocalStrategy that we have created
-        usernameField: 'email',
-        passReqToCallback : true // allows up to set first argument as req
-    },
-    function(req,email, password, done){ 
+const { sessionStore } = require('./sessionStore');
+const mongoose = require('mongoose');
 
-        User.findOne({email: email}) // NOTE : this findOne will check user with given email is in database or not 
-        .then((user)=>{
-            if(!user || user.password != password){
-                // console.log('Invalid Username/Password');
-                req.flash('error' , 'Invalid Username/Password');
-                return done(null, false); // false: user not found
+
+
+passport.use(new LocalStrategy({   
+        usernameField: 'email',
+        passReqToCallback : true 
+    },
+    async function(req,email, password, done){ 
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+
+        
+        
+        
+        
+        
+        
+
+        
+        
+        
+        
+        
+        
+        
+        
+
+
+        try {
+            const user = await User.findOne({ email: email });
+    
+            if (!user || user.password !== password) {
+                req.flash('error', 'Invalid Username/Password');
+                return done(null, false);
             }
-            else{
-                return done(null, user); // null : no error , user : user is found
-            }
-        })
-        .catch((err)=>{
-            // console.log('Error in finding user --> Passport');
-            req.flash('error' , err);
+    
+            
+            const client = mongoose.connection.getClient();
+            const sessionsCollection = client.db().collection('sessions');
+            
+
+            const sessions = await sessionsCollection.find({}).toArray();
+            const userSessions = sessions.filter(session => {
+                const sessionData = JSON.parse(session.session);
+                return sessionData.passport && sessionData.passport.user === user.id;
+            });
+            const deletePromises = userSessions.map(session => 
+                sessionsCollection.deleteOne({ _id: session._id })  
+                
+            );
+
+            
+            
+            
+
+
+
+
+            
+    
+            return done(null, user);
+        } catch (err) {
+            req.flash('error', err);
             return done(err);
-        });
+        }
     }
 
 
@@ -38,26 +96,24 @@ passport.use(new LocalStrategy({   // telling passport to use the LocalStrategy 
 
 passport.serializeUser(function(user, done){
     done(null, user.id); 
-
 })
 
 
 
-// deserializing the user from the key in the cookies
 passport.deserializeUser(function(id, done){
-    User.findById(id) // NOTE : this findById will check user with given user id is in cookie or not 
+    User.findById(id) 
     .then((user)=>{
         return done(null, user);
     })
     .catch((err)=>{
-        console.log('Error in finding user --> Passport'); // when cookie sent back to the server , the deserializeUser done now , user is found
+        
         return done(err);
     })
 });
 
 
 
-// middlewares added 
+
 passport.checkAuthentication = function(req,res,next){
     if(req.isAuthenticated()){
         return next(); 
@@ -67,7 +123,7 @@ passport.checkAuthentication = function(req,res,next){
 
 passport.setAuthenticatedUser = function(req , res , next){ 
     if(req.isAuthenticated()){
-        res.locals.user = req.user; // sending signed in info in req.users to locals for views(user will be available in view now)
+        res.locals.user = req.user; 
     }
     next();
 }

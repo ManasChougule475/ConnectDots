@@ -17,9 +17,9 @@ class ToggleLike{
                 url: $(self).attr('href'),
             })
             .done(function(data) {
-                console.log(data.data.deleted);
+                
                 let likesCount = parseInt($(self).attr('data-likes'));
-                // console.log(likesCount);
+                // 
                 if (data.data.deleted == true){
                     likesCount -= 1;
                 }else{
@@ -29,7 +29,7 @@ class ToggleLike{
                 $(self).html(`${likesCount} Likes`);
             })
             .fail(function(errData) {
-                console.log('error in completing the request');
+                
             });
             
 

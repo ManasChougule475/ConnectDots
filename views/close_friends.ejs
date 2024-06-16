@@ -5,7 +5,19 @@
         <a class="toggle-friend-btn" href="/friends/add-close-friend/?close_friend_id=<%=close_friend.id%>&user_id=<%=locals.user.id%>">Remove</a>
     </p></li>
 <% } %>
-<h4>Suggested</h4>
+
+<% if (length>0){ %>
+    <h4>Suggested</h4>
+<% }else{%>
+    <% if (all_close_friends.length==0){ %>
+        <h4>No more friends to suggest!</h4>
+    <% }else{%>
+        <h4>Your friend list is empty at the moment !</h4>
+    <%}%>   
+    <h4>Consider expanding your social circle by reaching out and connecting with others 😊.</h4>
+<%}%>
+
+
 <% for(friend of all_friends){ %>
     <% if (friend.to_user.name != locals.user.name) {%>
         <% if(friend.closeFriendStatus_fromUser_to_toUser==0) {%>

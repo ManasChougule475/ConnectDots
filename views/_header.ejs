@@ -3,13 +3,40 @@
         <div class="mini-logo">
             <p>
                 <a href='/'>
-                    Codeial
+                    ConnectDots
                 </a>
             </p>
         </div>
 
     <ul>
         <% if(locals.user) {%>
+            <div class="main-div">
+            <li>
+                <a href="/users/allUsers/"> Users </a>
+            </li>
+
+            <li>
+                <a href="/friends/allFriends/"> Friends </a>
+            </li>
+
+            <li>
+                <a href="/friends/close-friends/">Close Friends</a>
+            </li>
+
+            <li>
+                <% if(typeof user !== 'undefined' && user && user.countOfNewlyReceivedNotifications!=0){%>
+                    <div class="notificationsCount"><%=user.countOfNewlyReceivedNotifications%></div>
+                <%}%>
+                <a href="/users/allNotifications/"> Notifications </a>
+            </li>
+
+            <li>
+                <% if(typeof user !== 'undefined' && user && user.totalFriendRequestsReceived!=0){%>
+                    <div class="totalFriendRequestsReceived"><%=user.totalFriendRequestsReceived%></div>
+                <%}%>
+                <a href="/users/pending-friend-requests/">Friend Requests</a> 
+            </li>
+
             <li>
                 <a href="/users/profile/<%=user.id%>"> <%=user.name%> </a>
             </li>
@@ -24,6 +51,7 @@
             <li>
                 <a href="/users/sign-up"> Sign Up </a>
             </li>
+        </div>
         <%}%>
     </ul>
 

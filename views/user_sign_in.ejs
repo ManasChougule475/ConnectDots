@@ -1,9 +1,11 @@
 <h1>Sign In</h1>
 
 
-<form action="/users/create-session"  method="POST">
-    <input type="email" name="email" placeholder="Enter Email" required>
-    <input type="password" name="password" placeholder="Enter Password" required>
+<form action="/users/create-session"  method="POST" onsubmit="return validateEmail() && validatePasswords()">
+    <input id="email" type="email" name="email" placeholder="Enter Email" required><br>
+    <span id="emailSpan"></span><br>
+    <input id="password" type="password" name="password" placeholder="Enter Password" required><br>
+    <span id="passwordSpan"></span><br>
     <input type="submit" value="Sign In">
 </form>
 
@@ -15,6 +17,43 @@
     <a href="/users/forgot-password">forgot password</a>
 </p>
 
+
+<script>
+    function validateEmail() {
+        
+        var email = document.getElementById('email').value;
+        var emailSpan = document.getElementById('emailSpan');
+        var emailPattern = /^[a-zA-Z0-9]+@gmail.com$/;
+        if (email.length > 50) {
+            document.getElementById('email').value = '';  
+            emailSpan.innerText = 'Email is too long. Please use a shorter email address.'
+            return false; 
+        }else{
+            emailSpan.innerText = ""
+        }  
+        if (!emailPattern.test(email)) {
+            document.getElementById('email').value = ''; 
+            emailSpan.innerText = 'Please use a Gmail address to login to your account.'
+            return false; 
+        }else{
+            emailSpan.innerText = ""
+        }
+        return true; 
+    }
+
+    function validatePasswords() {
+        var password = document.getElementById('password').value;
+        if (password.length > 30) {
+            password.value = ''; 
+            document.getElementById('passwordSpan').innerText = "Password length must be less than 30"
+            return false; 
+        }else{
+            document.getElementById('passwordSpan').innerText = "";
+        }
+        return true; 
+    }
+
+</script>
 
 
  

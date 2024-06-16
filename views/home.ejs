@@ -10,11 +10,24 @@
     
     <section id="feed-posts">
         <h4>Posts</h4>
-        <% if(locals.user) {%>
-        <form action="/posts/create" id="new-post-form" method="POST">
-            <textarea name="content" cols="30" rows="3" placeholder="Type Here..." required></textarea>
+        <% if(locals.user && pageNo==1) {%>
+        <form action="/posts/create" id="new-post-form" method="POST" onsubmit="return validatePostForm()">
+            <textarea id="postInput" name="content" cols="30" rows="3" placeholder="Type Here..." required></textarea>
             <input type="submit" value="Post">
         </form>
+
+        <script>
+            function validatePostForm(){
+                const postInput = document.getElementById('postInput');
+                if (postInput.value.length > 250) {
+                    alert('Post length should be less than or equal to 250 characters.');
+                    postInput.value = ''; // Clear the input if length is greater than 10
+                    return false; // Prevent form submission
+                }
+                return true; // Allow form submission
+            }
+
+        </script>
         <% } %>
     
         <div id="posts-list-container">
@@ -24,46 +37,37 @@
                 <% } %>
             </ul>
         </div>
+
+        <div id="pages">  
+            
+            <% for (let i = pageNo-2; i <= pageNo+2 ; i++) {%>
+                <% if (i != -1 && i != 0){%>
+                    <a href="/?pageNo=<%= i %>" style="
+                        <%= i === pageNo && posts_length>5? 'font-weight: bold; background-color: #2196f3; color: #fff;' : '' %>
+                        border-radius: 50%;
+                        width: 30px;
+                        height: 30px;
+                        line-height: 30px;
+                        text-align: center;
+                        margin: 0 5px;
+                      ":hover> 
+                        <% if (i<pageNo) {%>
+                            <%= i %> 
+                        <% } else if (i==pageNo && posts_length>5){%>
+                            <%= i %> 
+                        <%} else if (i==pageNo+1 && posts_length>5){%>
+                            <%= i %> 
+                        <%} else if (i==pageNo+2 && posts_length>10){%>
+                            <%= i %> 
+                        <%}%>
+                    </a> &nbsp;&nbsp;&nbsp;&nbsp;
+                <% } %>
+            <% } %>
+        </div>
     
     </section>
     
 
-
-    <div id="sidebar-container">
-        <% if(locals.user) {%>
-            <strong>
-                <a href="/users/pending-friend-requests/">Friend Requests :<%=total_pending_requests%></a>
-                <a href="/friends/close-friends/">Close Friends</a>
-            </strong> 
-        <%}%>
-
-
-
-        
-        <% if(locals.user) {%>
-            <div id="friends-container" class="user-list">
-                <h2>Friends:</h2>
-                <ul>                       
-                    <% for(friend of all_friends){ %>
-                        <% if (friend.to_user.name != locals.user.name) {%>
-                            <li><p class="user-item"><a href="/users/profile/<%= friend.to_user.id %>"><%= friend.to_user.name %></a></p></li>
-                        <% } else {%>
-                            <li><p class="user-item"><a href="/users/profile/<%= friend.from_user.id %>"><%= friend.from_user.name %></a></p></li>
-                        <% } %>
-                    <% } %>
-                </ul>
-            </div>
-        <% } %>
-        <div id="all-users-container" class="user-list">
-            <h2>Users:</h2>
-            <ul>
-                <% for(u of all_users){ %>
-                    <li><p class="user-item"><a href="/users/profile/<%= u.id %>"><%= u.name %></a></p></li>
-                <% } %>
-            </ul>
-        </div>
-    
-    </div>
 
     <%- include('_chat_box') -%>
    

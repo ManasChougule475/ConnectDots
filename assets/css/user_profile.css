@@ -7,3 +7,10 @@ h1 {
   flex-direction: row-reverse;
   justify-content: space-around;
 }
+
+
+.flex-container .profile_user_posts #pagesInProfile{
+    display: flex;
+    margin-top: 60px;
+    justify-content: center;
+}

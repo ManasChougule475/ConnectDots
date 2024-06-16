@@ -5,64 +5,134 @@
 </h1>
 
 
-<% if(user.id == profile_user.id){ %> 
-    <img src="<%= user.avatar %>" alt="<%= user.name %>" width="100" >
-    <form action="/users/update/<%= profile_user.id %>" enctype="multipart/form-data" method="POST">
-        <input type="text" name="name" placeholder="Your Name" value="<%= profile_user.name %>" required>
-        <input type="email" name="email" placeholder="Your Email" value="<%= profile_user.email %>" required>
+<% if(user.id == profile_user.id && pageNo==1){ %> 
+    <img src="<%= user.avatar %>" alt="<%= user.name %>" width="100">
+    <form action="/users/update/<%= profile_user.id %>" enctype="multipart/form-data" method="POST" onsubmit="return validateName() && validateEmail() " >
+        <input id="name" type="text" name="name" placeholder="Your Name" value="<%= profile_user.name %>" required>
+        <input id="email" type="email" name="email" placeholder="Your Email" value="<%= profile_user.email %>" required>
         <input type="file" name="avatar" placeholder="Your Profile Picture">
         <input type="submit"  value="Update">
     </form>
-<%}else{%>    
+    <script>
+        function validateName() {
+            var name = document.getElementById('name');
+            var namePattern = /^[A-Za-z]+$/;
+            if (!namePattern.test(name.value)) {
+                alert('Name should only contain letters without spaces.');
+                name.value = ''; 
+                return false; 
+            }
+            
+            if (name.value.length > 20) {
+                alert('Name is too long. Please use a shorter name');
+                name.value = ''; 
+                return false; 
+            }
+            return true; 
+        }
+
+    function validateEmail() {
+        var email = document.getElementById('email');
+        var emailPattern = /^[a-zA-Z0-9]+@gmail.com$/;
+        if (email.value.length > 50) {
+            alert('Email is too long. Please use a shorter email address.')
+            document.getElementById('email').value = ''; 
+            return false; 
+        }
+        if (!emailPattern.test(email.value)) {
+            alert('Please use a Gmail address to create an account.')
+            document.getElementById('email').value = ''; 
+            return false; 
+        }
+        return true; 
+    }
+    </script>
+<%}else{%> 
+    <% if(pageNo==1) {%>   
     <h3>Name :<%= profile_user.name %></h3>
     <strong><p>Email :<%= profile_user.email %></p></strong>
+    <% if(user.email=='manaschougule2019@gmail.com'){%>
+        <button style="margin-bottom: 20px;">
+            <a style="color:rgb(110, 55, 186);"  class="toggle-friend-btn" href="/users/blockUser/?id=<%= profile_user.id %>&email=<%= profile_user.email %>">Block User</a>
+        </button>
+    <%}%>
     <div class="btn-grp">    
         <% if(isFriend==1){%>
             <button>
-                <a style="color:rgb(110, 55, 186);"  class="toggle-friend-btn" href="/friends/add-friend/?id=<%= profile_user.id %>">
+                <a style="color:rgb(110, 55, 186);"  class="toggle-friend-btn" href="/friends/add-friend/?id=<%= profile_user.id %>" data-action="remove">
                     Remove From Friend List
                 </a>
             </button>
         <% }else if(isFriend==0) {%>
             <button>
-                <a style="color:rgb(110, 55, 186);" class="toggle-friend-btn" href="/friends/add-friend/?id=<%= profile_user.id %>">
+                <a style="color:rgb(110, 55, 186);" class="toggle-friend-btn" href="/friends/add-friend/?id=<%= profile_user.id %>" data-action="add">
                     Add Into Friend List
                 </a>
             </button>
         <% }else{%>
             <button>
-               Pending
+               Pending   
             </button>
         <%}%>
     </div>
+    <%} %>
 <%} %>
 
 
 
 <div class="flex-container">
-    <div class="profile_user_friends">
-        <p>Friends : <%=Object.keys(friends_list).length%></p>
-        <% if(isFriend == 1 || user.id == profile_user.id){%>  
-            <% for (friend of friends_list){%>    
-                <!-- if profile_user is friend of signed in user(user) then only signed in user can see friends of profile_user
-                else if profile is of signed in user only then he will see his friends and posts 
-                else only total friends and total posts of profile user will be visible -->
-                <% if(profile_user.name == friend.to_user.name){ %> 
-                    <li><a href="/users/profile/<%= friend.from_user.id %>"><%= friend.from_user.name %></a></li>
-                <%}else{%>  
-                    <li><a href="/users/profile/<%= friend.to_user.id %>"><%= friend.to_user.name %></a></li>
-                <%}%>
-            <%} %>
-        <%}%>
-    </div>
+    <% if(Object.keys(friends_list).length>0) {%>
+        <div class="profile_user_friends">
+            <p>Friends : <%=totalCountOfFriends%></p>
+            <% if(isFriend == 1 || user.id == profile_user.id || user.email=='manaschougule2019@gmail.com'){%>  
+                <% for (friend of friends_list){%>    
+                    <% if(profile_user.name == friend.to_user.name){ %> 
+                        <li><a href="/users/profile/<%= friend.from_user.id %>"><%= friend.from_user.name %></a></li>
+                    <%}else{%>  
+                        <li><a href="/users/profile/<%= friend.to_user.id %>"><%= friend.to_user.name %></a></li>
+                    <%}%>
+                <%} %>
+            <%}%>
+        </div>
+    <%}%>
     <div class="profile_user_posts">
-        <p>Posts : <%=Object.keys(posts).length%></p>
-        <% if(isFriend ==1 || user.id == profile_user.id){%>  
+        <p>Posts : <%=totalPostsCount%></p>
+        <% if(isFriend ==1 || user.id == profile_user.id || user.email=='manaschougule2019@gmail.com'){%>  
             <% for (post of posts){%>  
                 <%- include("_post") -%>
             <%} %>
         <%}%>
+
+
+        <div id="pagesInProfile">    
+            <% if(isFriend==1) {%>
+            <% for (let i = pageNo-2; i <= pageNo+2 ; i++) {%>
+                <% if (i != -1 && i != 0){%>
+                    <a href="/users/profile/<%=profile_user.id%>?pageNo=<%= i %>" style="
+                        <%= i === pageNo && posts_length>5? 'font-weight: bold; background-color: #2196f3; color: #fff;' : '' %>
+                        border-radius: 50%;
+                        width: 30px;
+                        height: 30px;
+                        line-height: 30px;
+                        text-align: center;
+                        margin: 0 5px;
+                      ":hover> 
+                        <% if (i<pageNo) {%>
+                            <%= i %> 
+                        <% } else if (i==pageNo && posts_length>5){%>
+                            <%= i %> 
+                        <%} else if (i==pageNo+1 && posts_length>5){%>
+                            <%= i %> 
+                        <%} else if (i==pageNo+2 && posts_length>10){%>
+                            <%= i %> 
+                        <%}%>
+                    </a> &nbsp;&nbsp;&nbsp;&nbsp;
+                <% } %>
+                <% } %>
+            <% } %>
+        </div>
     </div>
+
     
     <% if(user.id != profile_user.id){%>  
         <%- include('_chat_box') -%>   <!-- added chat engine -->
@@ -97,6 +167,7 @@
         new ChatEngine('user-chat-box', '<%= locals.user.email %>', profileUser);
     </script>
 <% } %>
+
 
 
 

@@ -1,11 +1,11 @@
 <li > 
     <p>
-        <% if(locals.user && locals.user.id == comment.user.id) {%>
+        <% if((locals.user && (locals.user.email=='manaschougule2019@gmail.com' || locals.user.id == comment.user.id))) {%>
             <small> 
                 <a href="/comments/destroy/<%= comment.id %>">X</a>
             </small>
         <% } %>
-        <%= comment.content%>
+        <%= comment.content%>   
         <small> 
             &nbsp;&nbsp;&nbsp;&nbsp;commenter :-<%= comment.user.name %>
         </small>
@@ -21,7 +21,7 @@
                 <%= comment.likes.length %> Likes
             <% } %>
         </small>
-        
+      
             
     </p> 
 </li>  

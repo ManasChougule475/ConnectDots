@@ -16,7 +16,7 @@ const development = {
     name: 'development',
     asset_path: './assets',  // when you remove dot or do /public/assets it gives error
     session_cookie_key: 'blahsomething',
-    db: 'codeial_development',
+    db: 'connect_dots',
     smtp : {   
         service: 'gmail',
         host: 'smtp.gmail.com', // google gmail smtp settings
@@ -33,17 +33,17 @@ const development = {
         secure:true,
         auth:{
             user: 'manaschougule2019@gmail.com',
-            pass: 'uoxtbrfawwtfmrsd'
+            pass: 'iokl jyqt wpmh slmj'
         },   
     },
     google_client_id: '86293826903-47rjjh5d38ebeoul5gl368f2o5dcfqnc.apps.googleusercontent.com',   
     google_client_secret: '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', 
-    google_callback_url: "http://localhost:8000/users/auth/google/callback",
-    jwt_secret_key: 'codeial',
+    google_callback_url: "http://13.127.17.176:8000/users/auth/google/callback",
+    jwt_secret_key: 'codeial_jwt_secret',
     morgan: {
         mode: 'combined',
         options: {stream: accessLogStream}
-    }
+    },
 }
 
 
@@ -53,7 +53,7 @@ const production={
     asset_path: process.env.CODEIAL_ASSET_PATH,
     session_cookie_key: process.env.CODEIAL_SESSION_COOKIE_KEY,
     db: process.env.CODEIAL_DB,
-    smtp: {
+    smtp: {        
         service: 'gmail',
         host: 'smtp.gmail.com',
         // port: 587,
@@ -78,7 +78,10 @@ const production={
     morgan: {
         mode: 'combined',  
         options: {stream: accessLogStream}
-    }
+    },
+    twilio_sid : process.env.TWILIO_ACCOUNT_SID,
+    twilio_auth_token : process.env.TWILIO_AUTH_TOKEN,
+    twilio_phone_number : process.env.TWILIO_PHONE_NUMBER
 }
 
 module.exports = eval(process.env.CODEIAL_ENVIRONMENT) == undefined ? development : eval(process.env.CODEIAL_ENVIRONMENT);

@@ -4,7 +4,7 @@ const env = require('../../../config/environment');
 module.exports.createSession = async function(req, res){
     try {
         let user = await User.findOne({email:req.body.email});
-        // console.log(req.body);
+        
         if(!user || user.password != req.body.password){
 
             return res.status(422).json({
@@ -19,9 +19,9 @@ module.exports.createSession = async function(req, res){
             }
         });
     } catch (error) {
-        // return res.json(500,{
-        //     message : "Internal Server Error"
-        // });
+        
+        
+        
         return res.status(500).json({
             message : "Internal Server Error"
         });

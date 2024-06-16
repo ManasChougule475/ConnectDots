@@ -1,9 +1,9 @@
 <li id="post-<%=post._id%>">
     <p>
 
-        <% if(locals.user && locals.user.id == post.user.id) {%>
+        <% if(locals.user && (locals.user.email=='manaschougule2019@gmail.com' || locals.user.id == post.user.id)) {%>
             <small>
-                <a class='delete-post-button' href="./posts/destroy/<%= post.id %>">X</a>
+                <a class='delete-post-button' href="/posts/destroy/<%= post.id %>">X</a>
             </small>
         <% } %>
         <%=post.content%>
@@ -25,18 +25,101 @@
 
     <div class="post-comments">
         <% if(locals.user) {%>
-            <form action="/comments/create" method="POST">
-                <input type="text" name="content" placeholder="Type here to add the comment..." required>
-                <input type="hidden" name="post" value= "<%= post._id %>" >
+            <form  action="/comments/create" method="POST" onsubmit="return validateCommentForm()">
+                <input id="commentInput" type="text" name="content" placeholder="Type here to add the comment..." required>
+                <input type="hidden" name="post" value="<%= post._id %>" >
                 <input type="submit" value="Add Comment">
             </form>
+            <script>
+                function validateCommentForm(commentId){
+                    
+                    const commentInput = document.getElementById('commentInput');
+                    if (commentInput.value.length > 80) {
+                        alert('Comment length should be less than or equal to 80 characters.');
+                        commentInput.value = ''; 
+                        return false; 
+                    }
+                    return true; 
+                }
+            </script>
+
         <%}%>
         <div class="post-comments-list">
             <ul id="post-comments-<%= post._id %>">
                 <% for (comment of post.comments){%>  
                     <%- include("_comment") -%>
                 <%} %>
+                <% if (locals.user && post.comments.length >= 5) { %>
+                    <button class="show-more-comments" data-post-id="<%= post._id %>" data-skip="5">Show More Comments</button>
+                <% } %>
             </ul>
+  
+        <script>
+            window.currentUser = {
+                id: "<%= typeof user !== 'undefined' && user ? user._id : '' %>",
+                loggedIn: <%= typeof user !== 'undefined' && user ? 'true' : 'false' %>
+            };
+            
+            document.addEventListener('DOMContentLoaded', () => {
+                const addCommentEventListeners = () => {
+                    document.querySelectorAll('.show-more-comments').forEach(button => {
+                    if (!button.classList.contains('listener-added')) {
+                        button.classList.add('listener-added');
+                        button.addEventListener('click', async () => {
+                            const postId = button.getAttribute('data-post-id');
+                            let skip = parseInt(button.getAttribute('data-skip'));
+
+                            try {
+                                const response = await fetch(`/comments/fetchNext15Comments/${postId}?skip=${skip}&limit=5`);
+                                const {comments,hasMore} = await response.json();
+                                
+                                if (comments.length > 0) {
+                                    comments.forEach(comment => {
+                                        let commentHtml = `<li><p>`;
+                                        if (window.currentUser.loggedIn && window.currentUser.id == comment.user._id) {
+                                            commentHtml += `<small>  <a href="/comments/destroy/${comment._id}">X</a>  </small> `;
+                                        }
+                                        commentHtml += `
+                                            ${comment.content}
+                                            <small> &nbsp;&nbsp;&nbsp;&nbsp;commenter :- ${comment.user.name} </small>
+                                        `;
+
+                                        if (window.currentUser.loggedIn) {
+                                            commentHtml += `
+                                                <small>
+                                                    <a class="toggle-like-button" data-likes="${comment.likes.length}" href="/likes/toggle/?id=${comment._id}&type=Comment">
+                                                        ${comment.likes.length} Likes
+                                                    </a>
+                                                </small>
+                                            `;
+                                        } else {
+                                            commentHtml += `<small> ${comment.likes.length} Likes </small> `;
+                                        }
+                                        commentHtml += `</p></li>`;
+                                        
+                                        button.insertAdjacentHTML('beforebegin', commentHtml); 
+                                    });
+
+                                    skip += 5;
+                                    button.setAttribute('data-skip', skip);
+
+                                    if (comments.length < 5 || !hasMore) {
+                                        button.remove();
+                                    }
+                                } else {
+                                    button.remove();
+                                }
+                            } catch (error) {
+                                console.error('Error loading more comments:', error);
+                            }
+                        });
+                    }});
+                };
+
+                addCommentEventListeners();
+            });
+        </script>
+                
         </div>
     </div>
 

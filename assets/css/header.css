@@ -7,8 +7,8 @@
   box-shadow: 1px 1px 1px 1px lightgrey;
 }
 #layout-header nav .mini-logo p {
-  margin: 5px;
-  font-size: 1.4rem;
+  /* margin: 1rem; */
+  font-size: 1.5rem;
   font-weight: bold;
 }
 #layout-header nav .auth-links ul {
@@ -22,4 +22,38 @@
 #layout-header nav a {
   color: white;
   text-decoration: none;
+}
+
+.main-div{
+    display: flex;
+    justify-content: space-evenly;
+    width: 80vw;
+    list-style: none;
+    margin-top: 1rem;
+}
+
+.notificationsCount{
+    background-color: rgb(249, 34, 22); 
+    width: 30%;
+    height: 90%;
+    border: 1px solid #fa8841;
+    border-radius: 50%;
+    font-size: 1rem;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin-top: -1.2rem;
+}
+
+.totalFriendRequestsReceived{
+    background-color: rgb(249, 34, 22); 
+    width: 25%;
+    height: 90%;
+    border: 1px solid #fa8841;
+    border-radius: 50%;
+    font-size: 1rem;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin-top: -1.2rem;
 }

@@ -1,0 +1,51 @@
+<h1>
+    <%= title %>
+</h1>
+
+<div>
+    <% if(locals.user) {%>
+        <div id="friends-container" class="user-list">
+            <ul>                       
+                <% for (let i = 0; i < range; i++) {%>
+                    <% if (all_friends[i].to_user.name != locals.user.name) {%>
+                        <li><p class="user-item"><a href="/users/profile/<%= all_friends[i].to_user.id %>"><%= all_friends[i].to_user.name %></a></p></li>
+                    <% } else {%>
+                        <li><p class="user-item"><a href="/users/profile/<%= all_friends[i].from_user.id %>"><%= all_friends[i].from_user.name %></a></p></li>
+                    <% } %>
+                <% } %>
+            </ul>
+        </div>
+
+
+        <div id="pages">         
+            <% for (let i = pageNo-2; i <= pageNo+2 ; i++) {%>
+                <% if (i != -1 && i != 0){%>
+                    <a href="/friends/allFriends/?pageNo=<%= i %>" style="
+                        <%= i === pageNo && friends_length>2 ? 'font-weight: bold; background-color: #2196f3; color: #fff;' : '' %>
+                        border-radius: 50%;
+                        width: 40px;
+                        height: 40px;
+                        line-height: 60px;
+                        text-align: center;
+                        margin: 0 10px;
+                      ":hover> 
+                            <% if (i<pageNo) {%>
+                                <%= i %> 
+                            <% } else if (i==pageNo && friends_length>7){%>
+                                <%= i %> 
+                            <%} else if (i==pageNo+1 && friends_length>7){%>
+                                <%= i %> 
+                            <%} else if (i==pageNo+2 && friends_length>14){%>
+                                <%= i %> 
+                            <%}%>
+                        </a> &nbsp;&nbsp;&nbsp;&nbsp;
+                <% } %>
+            <% } %>
+        </div>
+    
+
+        
+    <% } %>
+</div>
+
+

@@ -11,20 +11,26 @@
                 url: '/posts/create',
                 data: newPostForm.serialize(),
                 success: function(data){
-                    // console.log('Data' , data); // not printing
-                    let newPost = newPostDom(data.data.post);
-                    $('#posts-list-container>ul').prepend(newPost);
-                    deletePost($(' .delete-post-button', newPost));
                     
-                    // call the create comment class
-                    new PostComments(data.data.post._id);
+                    if (data.data){
+                        let newPost = newPostDom(data.data.post);
+                        $('#posts-list-container>ul').prepend(newPost);
+                        deletePost($(' .delete-post-button', newPost));
+                        
+                        // call the create comment class
+                        new PostComments(data.data.post._id);
+    
+                        // CHANGE :: enable the functionality of the toggle like button on the new post
+                        new ToggleLike($(' .toggle-like-button', newPost));
 
-                    // CHANGE :: enable the functionality of the toggle like button on the new post
-                    new ToggleLike($(' .toggle-like-button', newPost));
+                        newPostForm[0].reset();  // this clearn the post form after clicking submit Post button after post is made
+                    }else{
+                        // 
+                    }
                     
 
                 }, error: function(error){
-                    console.log(error.responseText);
+                    
                 }
             });
         });
@@ -44,9 +50,6 @@
                         ${ post.content }
                         <br>
                         <small>
-                        ${ post.user.name }
-                        </small>
-                        <small>
                             
                             <a class="toggle-like-button" data-likes="0" href="/likes/toggle/?id=${post._id}&type=Post">
                                 0 Likes
@@ -61,7 +64,6 @@
                                 <input type="hidden" name="post" value="${ post._id }" >
                                 <input type="submit" value="Add Comment">
                             </form>
-               
                 
                         <div class="post-comments-list">
                             <ul id="post-comments-${ post._id }">
@@ -84,7 +86,7 @@
                 success: function(data){
                     $(`#post-${data.data.post_id}`).remove();
                 },error: function(error){
-                    console.log(error.responseText);
+                    
                 }
             });
 

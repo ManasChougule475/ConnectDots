@@ -4,11 +4,10 @@ const port = 8000;
 const app = express();
 require('./config/view-helpers')(app);            
     
-// vim alternative setup
-require('dotenv').config();    
-// console.log(process.env.LOAD_PORT); // prints ABCD
-
-
+// vim alternative setup 
+require('dotenv').config();   // env file is accessed here 
+// 
+const { sessionMiddleware } = require('./config/sessionStore'); 
 // mongoose & user schema
 const db = require('./config/mongoose');
 // const User = require('./models/user');
@@ -34,18 +33,18 @@ const customMware = require('./config/middleware');
 
 // cookie-parser
 const cookieParser  = require('cookie-parser');
-
+   
 // app.use(express.urlencoded());
-
+  
 app.use(express.urlencoded({extended: false})); 
-app.use(cookieParser());  
+app.use(cookieParser());     
 
 
 // setup the chat server to be used with socket.io
 const chatServer = require('http').Server(app);
 const chatSockets = require('./config/chat_sockets').chatSockets(chatServer);
 chatServer.listen(5000);  
-console.log('chat server is listening on port 5000');
+
 
 
 //using static files & environment
@@ -72,28 +71,9 @@ app.set('views' , './views');
 const expressLayouts = require('express-ejs-layouts');
 app.use(expressLayouts);
 
-// using the express-session
-app.use(session({
-    name:'codeial', 
-    //TODO: update this secrete key at the time of deployment
-    secret: env.session_cookie_key ,
-    saveUninitialized : false, 
-    resave : false, 
-    cookie : {
-        maxAge : (1000 * 60 * 100)
-    },
 
-    store : new MongoStore(
-        {
-            // mongooseConnection : db,
-            mongoUrl: 'mongodb://127.0.0.1/codeial_development',    
-            autoRemove : 'disabled'
-        },
-        function(err){
-            console.log(err || 'connect-mongodb setup ok');
-        }
-    )
-}));
+
+app.use(sessionMiddleware);
 
 app.use(passport.initialize());
 app.use(passport.session());
@@ -112,7 +92,7 @@ app.use('/' , require('./routes'));
 
 app.listen(port , function(err){           
     if(err){
-        console.log(`Error :-  ${err}`);
+        
     }
-    console.log(`Success in running the server on port ${port}`);
+    
 })

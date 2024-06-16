@@ -7,11 +7,13 @@ const friendshipSchema = new mongoose.Schema(
       type: mongoose.Schema.Types.ObjectId,
       ref: 'User'
     },
+    
     // the user who accepted this request
     to_user: {
       type: mongoose.Schema.Types.ObjectId,
       ref: 'User'
     },
+
     status:{  // status :- 1 if toUser & fromUser both are friends(i.e in friendships array of both there is friendship relation between both)
       type: Number  // status :- 0 if toUser & fromUser both are not friends ; -1 if request is sent & it is pending
     },        // in case of status = 0 & -1 in friendships array of both there is friendship relation between

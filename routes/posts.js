@@ -20,5 +20,6 @@ router.get('/destroy/:id' , (req,res,next)=>{
     return res.redirect('/users/sign-in'); 
 } , postsController.destroy);
 
-  
+
+
 module.exports = router;
