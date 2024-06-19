@@ -16,7 +16,7 @@ const development = {
     name: 'development',
     asset_path: './assets',  // when you remove dot or do /public/assets it gives error
     session_cookie_key: 'blahsomething',
-    db: 'connect_dots',
+    db: 'db_name',
     smtp : {   
         service: 'gmail',
         host: 'smtp.gmail.com', // google gmail smtp settings

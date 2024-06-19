@@ -6,7 +6,7 @@ class ChatEngine {
         this.chatBox = $(`#${chatBoxId}`),
         this.userEmail = userEmail,
         this.to_user=toUser,
-        this.socket = io.connect('http://13.127.17.176:8000/', {
+        this.socket = io.connect('http://43.205.209.122:5000', {
             transports: ['polling'] ,
         });
 
@@ -103,7 +103,7 @@ class ChatEngine {
     connectionHandler() {
         let self = this;
         this.socket.on('connect', function() {
-            
+            console.log('connection established using sockets...!' , self.userEmail && self.to_user==null , self.to_user==null , self.userEmail,self.to_user);
             if (self.userEmail && self.to_user==null) {  
                 
                 self.socket.emit('join_room', {
