@@ -7,8 +7,10 @@ const userSockets = {};
 module.exports.chatSockets = function(socketServer) {
     const io = require('socket.io')(socketServer, {    
         cors: {
-            origin: "http://43.205.209.122:8000",
+            origin: 'http://43.205.209.122',
             methods: ["GET", "POST"],
+            allowedHeaders: ['Content-Type'],
+            credentials: true
         }
         
     });
