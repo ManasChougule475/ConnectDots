@@ -349,11 +349,10 @@ module.exports.createSession = async function(req,res,next){
 
     
     const token = jwt.sign({ userId: req.user.id }, env.jwt_secret_key, { expiresIn: '6h' });
-    // console.log('authToken:-',token)
+    console.log('authToken:-',token)
     res.cookie('authToken', token, { httpOnly: true, secure: true });   
 
     if(req.cookies.fromEmail && req.cookies.toEmail == req.body.email){  
-        
         return res.redirect('/friends/add-friend-response/');   
     }       
     

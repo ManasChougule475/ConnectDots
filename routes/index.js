@@ -18,6 +18,7 @@ function requireLogin(req, res, next) {
 
 const authenticateJWT = (req, res, next) => {
     const token = req.cookies.authToken;
+    console.log('authenticateJWT',token)
     if (token) {
       jwt.verify(token, env.jwt_secret_key, (err, decoded) => {
         if (err) {
