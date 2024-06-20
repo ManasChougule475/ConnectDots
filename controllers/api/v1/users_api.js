@@ -21,7 +21,7 @@ module.exports.createSession = async function(req, res){
     } catch (error) {
         
         
-        
+        console.log('error is',error)
         return res.status(500).json({
             message : "Internal Server Error"
         });

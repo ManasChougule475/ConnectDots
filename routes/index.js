@@ -21,6 +21,7 @@ const authenticateJWT = (req, res, next) => {
     if (token) {
       jwt.verify(token, env.jwt_secret_key, (err, decoded) => {
         if (err) {
+            console.log('env.jwt_secret_key',env.jwt_secret_key,'env.jwt_secret',env.jwt_secret,'err',err)
           return res.clearCookie('authToken').sendStatus(403); 
         }
         
